@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root, [data-theme="dark"] {
+  --font-main: 'Inter', system-ui, sans-serif;
+  --font-logo: 'Inter', system-ui, sans-serif;
+  
+  --bg-primary: #0a0a0f;
+  --bg-secondary: rgba(11, 37, 69, 0.4); /* Deep Navy translucent */
+  --bg-solid: #0B2545; /* Deep Navy primary solid */
+  --accent: #6c63ff;
+  --accent-light: #a78bfa;
+  --accent-hover: #5a52d5;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --green: #00e676;
+  --red: #ff4757;
+  --border: rgba(255, 255, 255, 0.1);
+  --overlay-top: rgba(10, 10, 15, 0.85);
+  --overlay-bot: rgba(10, 10, 15, 0.95);
+  --overlay-tint: rgba(108, 99, 255, 0.1);
+}
+
+[data-theme="light"] {
+  --font-main: 'Inter', system-ui, sans-serif;
+  --font-logo: 'Inter', system-ui, sans-serif;
+
+  --bg-primary: #FAFAFA;  /* Ultra light clean gray */
+  --bg-secondary: #FFFFFF; /* Pure white cards */
+  --bg-solid: #FFFFFF;
+  --accent: #0f172a;      /* Near black for extreme premium contrast */
+  --accent-light: #3b82f6; /* Modern crisp blue */
+  --accent-hover: #1e293b;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --green: #10b981;
+  --red: #ef4444;
+  --border: rgba(0,0,0,0.06);
+  --overlay-top: rgba(250, 250, 250, 0.85);
+  --overlay-bot: rgba(250, 250, 250, 0.98);
+  --overlay-tint: rgba(0, 0, 0, 0.03); /* gentle shadow/tint */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--accent-light); border-radius: 10px; opacity: 0.5; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Selection */
+::selection { background: var(--accent-light); color: var(--bg-solid); }
+
+button { font-family: inherit; }
+input, select { font-family: inherit; }
+a { color: var(--accent-light); }
+
+/* Stock-themed background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to bottom, var(--overlay-top), var(--overlay-bot)),
+    linear-gradient(45deg, var(--overlay-tint), transparent),
+    url('/stock-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Add a very subtle grid on top of the image */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Page wrapper */
+.page-wrapper {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+/* ────────────────────────────────────────────────────────────
+   MODERN TRENDY ANIMATIONS (Global)
+   ──────────────────────────────────────────────────────────── */
+
+/* 1. Staggered Fade & Slide Up (Apple/Vercel style) */
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0; /* Starts hidden until animation kicks in */
+}
+
+/* Stagger delays */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+
+/* 2. Shimmer Effect for Cards */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(250%) skewX(-15deg); }
+}
+
+.card-hover-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hover-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-150%) skewX(-15deg);
+  transition: 0.5s ease-out;
+  pointer-events: none;
+}
+
+.card-hover-shimmer:hover::after {
+  animation: shimmerSweep 0.8s ease-out forwards;
+}

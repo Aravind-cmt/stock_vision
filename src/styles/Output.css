@@ -1,0 +1,200 @@
+.output-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.output-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.output-empty span { font-size: 3rem; }
+
+.output-empty button {
+  background: var(--bg-solid);
+  color: var(--accent-light);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.output-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.output-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem;
+}
+
+.output-header p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.output-header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-outline, .btn-csv-out, .btn-primary {
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-outline:hover { border-color: var(--accent); color: var(--accent-light); }
+
+.btn-csv-out {
+  background: var(--bg-solid);
+  color: var(--green);
+  border: 1.5px solid var(--border);
+}
+
+.btn-csv-out:hover { background: var(--overlay-tint); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: #fff;
+  border: none;
+  box-shadow: 0 3px 14px var(--overlay-tint);
+}
+
+.btn-primary:hover { box-shadow: 0 5px 18px var(--overlay-tint); transform: translateY(-1px); }
+
+.mock-notice {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.feature-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.feat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+  box-shadow: 0 10px 30px var(--overlay-tint);
+}
+
+.feat-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px var(--overlay-tint); }
+
+.feat-card.positive { border-color: var(--green); }
+.feat-card.negative { border-color: var(--red); }
+
+.feat-icon { font-size: 1.4rem; }
+
+.feat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.feat-card.positive .feat-value { color: var(--green); }
+.feat-card.negative .feat-value { color: var(--red); }
+
+.feat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  box-shadow: 0 10px 30px var(--overlay-tint);
+}
+
+.ohlcv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.ohlcv-table thead tr {
+  background: var(--overlay-tint);
+}
+
+.ohlcv-table th {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.ohlcv-table td {
+  padding: 0.7rem 1rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.ohlcv-table tbody tr:last-child td { border-bottom: none; }
+
+.row-profit { background: rgba(0,230,118,0.05); }
+.row-loss { background: rgba(255,23,68,0.05); }
+
+.ohlcv-table tbody tr:hover {
+  background: var(--overlay-tint) !important;
+}
+
+.td-date { font-weight: 500; color: var(--text-primary); }
+.td-weekday { color: var(--text-secondary); font-size: 0.8rem; }
+.td-high { color: var(--green); }
+.td-low { color: var(--red); }
+.td-close { font-weight: 600; }
+
+.change-positive { color: var(--green); font-weight: 600; }
+.change-negative { color: var(--red); font-weight: 600; }
