@@ -151,11 +151,11 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   margin-bottom: 3.5rem;
-  background: linear-gradient(135deg, var(--overlay-tint), transparent);
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 24px;
   padding: 2rem 2.5rem;
-  box-shadow: 0 20px 40px var(--overlay-tint);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.05);
 }
 
 .dash-greeting {
@@ -263,7 +263,7 @@
 
 .stock-card {
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 20px;
   padding: 1.5rem;
   cursor: pointer;
@@ -274,13 +274,13 @@
   text-align: left;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.05);
 }
 
 .stock-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--accent);
-  box-shadow: 0 15px 40px rgba(108, 99, 255, 0.25);
+  transform: translateY(-3px);
+  border-color: var(--border);
+  box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.08);
 }
 
 .sc-left {

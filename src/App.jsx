@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { StockProvider } from './context/StockContext';
@@ -17,7 +17,7 @@ import MLPlaceholderPage from './pages/MLPlaceholderPage';
 function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
+      <HashRouter>
         <AuthProvider>
           <StockProvider>
           <Navbar />
@@ -54,7 +54,7 @@ function App() {
           </div>
           </StockProvider>
         </AuthProvider>
-      </BrowserRouter>
+      </HashRouter>
     </ThemeProvider>
   );
 }

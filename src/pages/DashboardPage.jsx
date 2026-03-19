@@ -140,7 +140,7 @@ const DashboardPage = () => {
                 <div className="sc-sparkline">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={generateSparkline(stock.symbol, isProfit, p.price)}>
-                      <Line type="monotone" dataKey="val" stroke={isProfit ? '#10b981' : '#ef4444'} strokeWidth={2} dot={false} isAnimationActive={true} animationDuration={1000} />
+                      <Line type="monotone" dataKey="val" stroke={isProfit ? '#34C759' : '#FF3B30'} strokeWidth={2} dot={false} isAnimationActive={true} animationDuration={1000} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

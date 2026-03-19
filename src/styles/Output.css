@@ -83,13 +83,13 @@
 .btn-csv-out:hover { background: var(--overlay-tint); }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  background: var(--accent-light);
   color: #fff;
   border: none;
-  box-shadow: 0 3px 14px var(--overlay-tint);
+  box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2);
 }
 
-.btn-primary:hover { box-shadow: 0 5px 18px var(--overlay-tint); transform: translateY(-1px); }
+.btn-primary:hover { box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); transform: translateY(-1px); }
 
 .mock-notice {
   background: transparent;
@@ -118,10 +118,10 @@
   align-items: flex-start;
   gap: 0.5rem;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
-  box-shadow: 0 10px 30px var(--overlay-tint);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.05);
 }
 
-.feat-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px var(--overlay-tint); }
+.feat-card:hover { transform: translateY(-3px); box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.08); }
 
 .feat-card.positive { border-color: var(--green); }
 .feat-card.negative { border-color: var(--red); }
@@ -149,7 +149,7 @@
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--bg-secondary);
-  box-shadow: 0 10px 30px var(--overlay-tint);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.05);
 }
 
 .ohlcv-table {
