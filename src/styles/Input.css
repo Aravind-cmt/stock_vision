@@ -7,10 +7,10 @@
 .input-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: var(--radius-md);
   padding: 2.5rem;
   margin-bottom: 2rem;
-  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Student theme shadow */
 }
 
 .input-header {
@@ -55,22 +55,23 @@
 }
 
 .styled-input {
-  background: var(--bg-solid);
+  background: #F9FAFB;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 0.75rem 1rem;
   color: var(--text-primary);
   font-size: 0.95rem;
-  font-family: var(--font-main);
+  font-family: inherit;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
   width: 100%;
   box-sizing: border-box;
 }
 
 .styled-input:focus {
+  background: #FFFFFF;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--overlay-tint);
+  box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15); /* Teal focus ring */
 }
 
 .styled-input::placeholder { color: var(--text-secondary); opacity: 0.5; }
@@ -83,12 +84,12 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0; right: 0;
-  background: var(--bg-solid);
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   z-index: 10;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .suggestion-item {

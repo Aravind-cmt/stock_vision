@@ -40,9 +40,9 @@
 .report-content {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: var(--radius-md);
   padding: 2.5rem;
-  box-shadow: 0 20px 40px var(--overlay-tint);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .report-title-section {
@@ -80,13 +80,13 @@
 
 .stat-card {
   background: var(--bg-solid);
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  box-shadow: 0 8px 24px var(--overlay-tint);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .stat-icon { font-size: 1.3rem; }
@@ -139,11 +139,12 @@
 }
 
 .interpretation-card {
-  background: var(--overlay-tint);
-  border: 1px solid var(--accent);
-  border-radius: 20px;
+  background: #F9FAFB;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
   padding: 1.75rem;
-  box-shadow: 0 10px 30px var(--overlay-tint);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .interpretation-card p {

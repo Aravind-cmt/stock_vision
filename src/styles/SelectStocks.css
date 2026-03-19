@@ -74,25 +74,25 @@
 }
 
 .stock-option-card {
-  background: var(--bg-solid);
-  border: 1.5px solid var(--border);
-  border-radius: 16px;
-  padding: 1.5rem 1.2rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem 1.2rem;
   cursor: pointer;
   text-align: left;
   position: relative;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  box-shadow: 0 8px 24px var(--overlay-tint);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .stock-option-card:hover {
-  border-color: var(--accent-light);
-  background: var(--overlay-tint);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px var(--overlay-tint);
+  border-color: var(--accent);
+  background: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .stock-option-card.selected {

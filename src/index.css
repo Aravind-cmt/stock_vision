@@ -6,44 +6,35 @@
   padding: 0;
 }
 
-:root, [data-theme="dark"] {
-  --font-main: 'Inter', system-ui, sans-serif;
-  --font-logo: 'Inter', system-ui, sans-serif;
+:root, [data-theme="light"], [data-theme="dark"] {
+  --font-main: 'Roboto', 'Inter', system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', 'Courier New', monospace;
   
-  --bg-primary: #0a0a0f;
-  --bg-secondary: rgba(11, 37, 69, 0.4); /* Deep Navy translucent */
-  --bg-solid: #0B2545; /* Deep Navy primary solid */
-  --accent: #6c63ff;
-  --accent-light: #a78bfa;
-  --accent-hover: #5a52d5;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.55);
-  --green: #00e676;
-  --red: #ff4757;
-  --border: rgba(255, 255, 255, 0.1);
-  --overlay-top: rgba(10, 10, 15, 0.85);
-  --overlay-bot: rgba(10, 10, 15, 0.95);
-  --overlay-tint: rgba(108, 99, 255, 0.1);
-}
-
-[data-theme="light"] {
-  --font-main: 'Inter', system-ui, sans-serif;
-  --font-logo: 'Inter', system-ui, sans-serif;
-
-  --bg-primary: #F5F6F8;  /* Stockwave light gray */
-  --bg-secondary: #FFFFFF; /* Pure white cards */
-  --bg-solid: #1D2B4D;    /* Deep Navy */
-  --accent: #1D2B4D;      /* Deep Navy */
-  --accent-light: #007AFF; /* Bright Blue */
-  --accent-hover: #121c33;
-  --text-primary: #000000;
-  --text-secondary: #6F767E;
-  --green: #34C759;       /* Vibrant green */
-  --red: #FF3B30;         /* Sharp red */
-  --border: rgba(0,0,0,0.06);
-  --overlay-top: rgba(245, 246, 248, 0.85);
-  --overlay-bot: rgba(245, 246, 248, 0.98);
-  --overlay-tint: rgba(0, 0, 0, 0.03);
+  /* Student Developer Theme */
+  --bg-primary: #F4F5F7;     /* Soft App Canvas */
+  --bg-secondary: #FFFFFF;   /* Pure White Cards */
+  --bg-solid: #0B3D91;       /* Deep Blue Primary */
+  
+  --accent: #00A896;         /* Teal Accent */
+  --accent-light: #00CBA9;
+  --accent-hover: #008B7A;
+  
+  --text-primary: #1F2937;   /* Dark legible text */
+  --text-secondary: #6B7280; /* Muted text for labels */
+  
+  --green: #10B981;          /* Profit Green */
+  --red: #EF4444;            /* Loss Red */
+  
+  --border: #E5E7EB;         /* Soft panel borders */
+  --border-light: #F3F4F6;
+  
+  --overlay-top: rgba(244, 245, 247, 0.85);
+  --overlay-bot: rgba(244, 245, 247, 0.98);
+  --overlay-tint: rgba(0, 0, 0, 0.04);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 }
 
 html {
@@ -78,39 +69,18 @@ button { font-family: inherit; }
 input, select { font-family: inherit; }
 a { color: var(--accent-light); }
 
-/* Stock-themed background (hidden in light mode for a clean look) */
-body[data-theme="dark"]::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(to bottom, var(--overlay-top), var(--overlay-bot)),
-    linear-gradient(45deg, var(--overlay-tint), transparent),
-    url('/stock-bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  pointer-events: none;
-  z-index: 0;
+/* Page wrapper for Sidebar layout */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
 }
 
-body[data-theme="dark"]::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 50px 50px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Page wrapper */
 .page-wrapper {
   flex: 1;
   position: relative;
-  z-index: 1;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ────────────────────────────────────────────────────────────

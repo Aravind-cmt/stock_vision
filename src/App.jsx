@@ -2,7 +2,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { StockProvider } from './context/StockContext';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import LoginPage from './pages/LoginPage';
@@ -20,9 +20,10 @@ function App() {
       <HashRouter>
         <AuthProvider>
           <StockProvider>
-          <Navbar />
-          <div className="page-wrapper">
-            <Routes>
+            <div className="app-layout">
+              <Sidebar />
+              <div className="page-wrapper">
+                <Routes>
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
@@ -52,10 +53,11 @@ function App() {
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </div>
-          </StockProvider>
-        </AuthProvider>
-      </HashRouter>
-    </ThemeProvider>
+        </div>
+      </StockProvider>
+    </AuthProvider>
+  </HashRouter>
+</ThemeProvider>
   );
 }
 
