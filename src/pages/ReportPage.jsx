@@ -2,10 +2,8 @@ import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
-  CartesianGrid, ResponsiveContainer, ReferenceLine, Legend,
+  CartesianGrid, ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { useStock } from '../context/StockContext';
 import { mean, max, min, stdDev, interpretTrend } from '../utils/statistics';
 import '../styles/Report.css';
@@ -42,67 +40,86 @@ const ReportPage = () => {
   const closes = stockData.map((d) => d.close);
   const stats = {
     mean: mean(closes).toFixed(2),
-    max: max(closes).toFixed(2),
-    min: min(closes).toFixed(2),
+    max:  max(closes).toFixed(2),
+    min:  min(closes).toFixed(2),
     stdDev: stdDev(closes).toFixed(2),
   };
 
   const interpretation = interpretTrend(stockData);
 
-  // Chart data: use every Nth point to avoid too-dense charts
+  // Chart data — every Nth point to keep charts readable
   const stride = Math.max(1, Math.floor(stockData.length / 60));
-  const chartData = stockData.filter((_, i) => i % stride === 0).map((d) => ({
-    date: d.date.slice(5), // MM-DD
-    close: d.close,
-    open: d.open,
-    gain: parseFloat(((d.close - d.open) / d.open * 100).toFixed(2)),
-  }));
+  const chartData = stockData
+    .filter((_, i) => i % stride === 0)
+    .map((d) => ({
+      date: d.date.slice(5),
+      close: d.close,
+      open: d.open,
+      gain: parseFloat(((d.close - d.open) / d.open * 100).toFixed(2)),
+    }));
 
-  const handleDownloadPDF = async () => {
-    const element = reportRef.current;
-    const canvas = await html2canvas(element, { scale: 1.5, useCORS: true, backgroundColor: '#0a0a0f' });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pdfW = pdf.internal.pageSize.getWidth();
-    const pdfH = (canvas.height * pdfW) / canvas.width;
-    let heightLeft = pdfH;
-    let position = 0;
-    pdf.addImage(imgData, 'PNG', 0, position, pdfW, pdfH);
-    heightLeft -= pdf.internal.pageSize.getHeight();
-    while (heightLeft > 0) {
-      position -= pdf.internal.pageSize.getHeight();
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pdfW, pdfH);
-      heightLeft -= pdf.internal.pageSize.getHeight();
-    }
-    pdf.save(`${activeSock?.name || 'stock'}_report.pdf`);
+  // ─── PDF via browser native print ─────────────────────────────────────────
+  // html2canvas cannot resolve CSS custom properties (var(--...)) → blank pages.
+  // window.print() uses the real browser renderer, so everything is correct.
+  const handleDownloadPDF = () => {
+    // Force animate-in elements fully visible before printing
+    const animEls = document.querySelectorAll('.animate-in');
+    animEls.forEach((el) => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+      el.style.animation = 'none';
+    });
+
+    const prevTitle = document.title;
+    document.title = `${activeSock?.name || 'Stock'} – StockVision Report`;
+
+    window.print();
+
+    // Restore after dialog closes
+    setTimeout(() => {
+      animEls.forEach((el) => {
+        el.style.opacity = '';
+        el.style.transform = '';
+        el.style.animation = '';
+      });
+      document.title = prevTitle;
+    }, 1500);
   };
 
   return (
     <div className="report-outer">
-      {/* Actions strip outside the printable area */}
-      <div className="report-actions">
+
+      {/* Action buttons — hidden during print */}
+      <div className="report-actions no-print">
         <button className="btn-back" onClick={() => navigate('/output')}>← Back to Data</button>
         <button className="btn-pdf" onClick={handleDownloadPDF}>⬇️ Download PDF Report</button>
       </div>
 
-      {/* Printable report area */}
+      {/* ═══════════ PRINTABLE AREA ═══════════ */}
       <div className="report-content animate-in delay-1" ref={reportRef}>
+
+        {/* Title */}
         <div className="report-title-section">
           <h1>📈 {activeSock?.name} — Analysis Report</h1>
-          <p>{activeSock?.label} · {stockData[0].date} to {stockData[stockData.length - 1].date}</p>
-          {stockData.some((r) => r.simulated) && <span className="mock-tag">ℹ️ Simulated Fallback</span>}
+          <p>{activeSock?.label} · {stockData[0].date} → {stockData[stockData.length - 1].date}</p>
+          {stockData.some((r) => r.simulated) && (
+            <span className="mock-tag">ℹ️ Simulated Fallback Data</span>
+          )}
         </div>
 
         {/* Stats cards */}
         <div className="stats-grid animate-in delay-2">
           {[
-            { label: 'Mean Price', value: `$${stats.mean}`, icon: '〰️', color: '#a78bfa' },
-            { label: 'Max Price', value: `$${stats.max}`, icon: '🔝', color: '#34d399' },
-            { label: 'Min Price', value: `$${stats.min}`, icon: '🔻', color: '#f87171' },
-            { label: 'Std Dev', value: `$${stats.stdDev}`, icon: '📐', color: '#fbbf24' },
+            { label: 'Mean Price', value: `₹${stats.mean}`,   icon: '〰️', color: '#0B3D91' },
+            { label: 'Max Price',  value: `₹${stats.max}`,    icon: '🔝', color: '#10B981' },
+            { label: 'Min Price',  value: `₹${stats.min}`,    icon: '🔻', color: '#EF4444' },
+            { label: 'Std Dev',    value: `₹${stats.stdDev}`, icon: '📐', color: '#F59E0B' },
           ].map((s) => (
-            <div className="stat-card card-hover-shimmer" key={s.label} style={{ borderColor: `${s.color}30` }}>
+            <div
+              className="stat-card card-hover-shimmer"
+              key={s.label}
+              style={{ borderColor: `${s.color}40` }}
+            >
               <span className="stat-icon">{s.icon}</span>
               <span className="stat-value" style={{ color: s.color }}>{s.value}</span>
               <span className="stat-label">{s.label}</span>
@@ -110,45 +127,64 @@ const ReportPage = () => {
           ))}
         </div>
 
-        {/* Price line chart */}
+        {/* Price chart */}
         <div className="chart-section animate-in delay-3">
           <h2>Price Over Time (Close)</h2>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} tickLine={false} />
-              <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} tickLine={false} axisLine={false} />
+              <CartesianGrid stroke="rgba(0,0,0,0.08)" />
+              <XAxis dataKey="date" tick={{ fill: '#6B7280', fontSize: 11 }} tickLine={false} />
+              <YAxis tick={{ fill: '#6B7280', fontSize: 11 }} tickLine={false} axisLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine y={parseFloat(stats.mean)} stroke="rgba(167,139,250,0.4)" strokeDasharray="4 4" label={{ value: 'Mean', fill: '#a78bfa', fontSize: 11 }} />
-              <Line type="monotone" dataKey="close" stroke="#6c63ff" strokeWidth={2} dot={false} name="Close Price" />
+              <ReferenceLine
+                y={parseFloat(stats.mean)}
+                stroke="#0B3D91"
+                strokeDasharray="4 4"
+                label={{ value: 'Mean', fill: '#0B3D91', fontSize: 11 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="close"
+                stroke="#0B3D91"
+                strokeWidth={2}
+                dot={false}
+                name="Close Price"
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Daily gain/loss bar chart */}
+        {/* Gain/loss bar chart */}
         <div className="chart-section animate-in delay-4">
           <h2>Daily Gain / Loss (%)</h2>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} tickLine={false} />
-              <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} tickLine={false} axisLine={false} />
+              <CartesianGrid stroke="rgba(0,0,0,0.08)" />
+              <XAxis dataKey="date" tick={{ fill: '#6B7280', fontSize: 11 }} tickLine={false} />
+              <YAxis tick={{ fill: '#6B7280', fontSize: 11 }} tickLine={false} axisLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" />
-              <Bar dataKey="gain" name="Daily Change %" fill="#6c63ff"
+              <ReferenceLine y={0} stroke="rgba(0,0,0,0.15)" />
+              <Bar
+                dataKey="gain"
+                name="Daily Change %"
                 shape={(props) => {
                   const { x, y, width, height, value } = props;
-                  const color = value >= 0 ? '#00e676' : '#ff1744';
-                  return <rect x={x} y={y} width={width} height={height} fill={color} rx={2} />;
+                  return (
+                    <rect
+                      x={x} y={y} width={width} height={height}
+                      fill={value >= 0 ? '#10B981' : '#EF4444'}
+                      rx={2}
+                    />
+                  );
                 }}
               />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Interpretation */}
+        {/* Statistical interpretation */}
         <div className="interpretation-section animate-in delay-5">
-          <h2>🧠 AI Interpretation</h2>
+          <h2>📊 ML Statistical Analysis</h2>
           <div className="interpretation-card card-hover-shimmer">
             {interpretation.split('\n').map((line, i) => (
               <p key={i}>{line}</p>
@@ -156,8 +192,37 @@ const ReportPage = () => {
           </div>
         </div>
 
+        {/* XGBoost feature summary */}
+        <div className="ml-summary-box animate-in delay-5">
+          <h2>🌲 XGBoost Model — Feature Highlights</h2>
+          <div className="ml-summary-grid">
+            {[
+              { name: 'RSI (14)',          desc: 'Relative Strength Index — overbought / oversold signal' },
+              { name: 'ATR (14)',          desc: 'Average True Range — raw market volatility' },
+              { name: 'SMI (14/3/3)',      desc: 'Stochastic Momentum Index — double-smoothed oscillator' },
+              { name: 'Volatility',        desc: '20-day annualised log-return std deviation' },
+              { name: 'ZScore Vol',        desc: 'Volume z-score vs 20-day rolling window' },
+              { name: 'RN = RVI / EMV',   desc: 'Reynolds Number — laminar vs turbulent market regime' },
+              { name: 'PriceSpike',        desc: 'Binary 2σ outlier flag on daily change %' },
+              { name: 'Grade (0–6)',       desc: '7-bucket daily return classification' },
+              { name: 'lag_RSI / lag_SMI',desc: 'Lagged signals to prevent look-ahead bias' },
+            ].map((f) => (
+              <div key={f.name} className="ml-feat-row">
+                <span className="ml-feat-name">{f.name}</span>
+                <span className="ml-feat-desc">{f.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="report-footer">
-          Generated by StockVision · {new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}
+          Generated by StockVision ·{' '}
+          {new Date().toLocaleDateString('en-IN', {
+            day: 'numeric', month: 'long', year: 'numeric',
+          })}
+          <span style={{ marginLeft: '1rem', opacity: 0.5 }}>
+            XGBoost · Yahoo Finance · React.js
+          </span>
         </div>
       </div>
     </div>

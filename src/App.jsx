@@ -12,7 +12,8 @@ import DashboardPage from './pages/DashboardPage';
 import InputPage from './pages/InputPage';
 import OutputPage from './pages/OutputPage';
 import ReportPage from './pages/ReportPage';
-import MLPlaceholderPage from './pages/MLPlaceholderPage';
+import MLPredictionPage from './pages/MLPredictionPage';
+import FeatureDetailsPage from './pages/FeatureDetailsPage';
 
 function App() {
   return (
@@ -44,8 +45,11 @@ function App() {
               <Route path="/report" element={
                 <ProtectedRoute><ReportPage /></ProtectedRoute>
               } />
-              <Route path="/ml-placeholder" element={
-                <ProtectedRoute><MLPlaceholderPage /></ProtectedRoute>
+              <Route path="/ml-prediction" element={
+                <ProtectedRoute><MLPredictionPage /></ProtectedRoute>
+              } />
+              <Route path="/feature-details" element={
+                <ProtectedRoute><FeatureDetailsPage /></ProtectedRoute>
               } />
 
               {/* Default redirect */}

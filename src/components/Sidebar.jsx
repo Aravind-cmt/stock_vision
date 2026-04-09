@@ -9,12 +9,13 @@ const Sidebar = () => {
   if (!currentUser) return null; // Don't show sidebar on login/signup
 
   const navLinks = [
-    { path: '/select-stocks', label: 'Select Stocks' },
-    { path: '/dashboard', label: 'Dashboard' },
-    { path: '/input', label: 'Input Data' },
-    { path: '/output', label: 'Output Table' },
-    { path: '/report', label: 'Analytics Report'},
-    { path: '/ml-placeholder', label: 'AI Predict' }
+    { path: '/select-stocks',   label: 'Select Stocks',    icon: '🏦' },
+    { path: '/dashboard',       label: 'Dashboard',         icon: '📊' },
+    { path: '/input',           label: 'Input Data',        icon: '📥' },
+    { path: '/output',          label: 'Output Table',      icon: '📋' },
+    { path: '/report',          label: 'Analytics Report',  icon: '📈' },
+    { path: '/ml-prediction',   label: 'ML Prediction',     icon: '🌲' },
+    { path: '/feature-details', label: 'Feature Details',   icon: '🧬' },
   ];
 
   return (

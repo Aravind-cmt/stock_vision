@@ -137,3 +137,10 @@
 .tech-stack-label strong {
   color: rgba(255, 255, 255, 0.6);
 }
+
+/* ── Hide sidebar when printing ── */
+@media print {
+  .sidebar { display: none !important; }
+  .app-layout { display: block !important; }
+  .page-wrapper { margin-left: 0 !important; }
+}

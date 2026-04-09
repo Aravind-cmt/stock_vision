@@ -1,3 +1,4 @@
+/* ─── Report Page ────────────────────────────────────────────── */
 .report-outer {
   max-width: 1100px;
   margin: 0 auto;
@@ -25,39 +26,35 @@
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
-
-.btn-back:hover { border-color: var(--accent); color: var(--accent-light); }
+.btn-back:hover { border-color: var(--accent); color: var(--accent); }
 
 .btn-pdf {
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
   color: #fff;
   border: none;
-  box-shadow: 0 4px 16px var(--overlay-tint);
+  box-shadow: 0 4px 16px rgba(0,168,150,0.2);
 }
+.btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,168,150,0.3); }
 
-.btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--overlay-tint); }
-
+/* ─── Printable area ─────────────────────────────────────────── */
 .report-content {
-  background: var(--bg-secondary);
+  background: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 2.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  color: #1F2937;
 }
 
-.report-title-section {
-  margin-bottom: 2rem;
-}
-
+.report-title-section { margin-bottom: 2rem; }
 .report-title-section h1 {
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #0B3D91;
   margin: 0 0 0.35rem;
 }
-
 .report-title-section p {
-  color: var(--text-secondary);
+  color: #6B7280;
   font-size: 0.88rem;
   margin: 0 0 0.5rem;
 }
@@ -65,12 +62,13 @@
 .mock-tag {
   font-size: 0.78rem;
   background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  border: 1px solid #E5E7EB;
+  color: #6B7280;
   border-radius: 6px;
   padding: 0.2rem 0.6rem;
 }
 
+/* ─── Stats Grid ─────────────────────────────────────────────── */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -79,92 +77,110 @@
 }
 
 .stat-card {
-  background: var(--bg-solid);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
+.stat-icon   { font-size: 1.3rem; }
+.stat-value  { font-size: 1.4rem; font-weight: 700; }
+.stat-label  { font-size: 0.75rem; color: #6B7280; text-transform: uppercase; letter-spacing: 0.04em; }
 
-.stat-icon { font-size: 1.3rem; }
-
-.stat-value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.chart-section {
-  margin-bottom: 2.5rem;
-}
-
+/* ─── Charts ─────────────────────────────────────────────────── */
+.chart-section { margin-bottom: 2.5rem; }
 .chart-section h2, .interpretation-section h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #6B7280;
   margin: 0 0 1.25rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+/* ─── Tooltip ─────────────────────────────────────────────────── */
 .custom-tooltip {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
   border-radius: 10px;
   padding: 0.65rem 0.9rem;
   font-size: 0.82rem;
-  color: var(--text-primary);
+  color: #1F2937;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
-
-.tt-label {
-  color: var(--text-secondary);
-  margin: 0 0 0.35rem;
-  font-size: 0.78rem;
-}
-
+.tt-label { color: #6B7280; margin: 0 0 0.35rem; font-size: 0.78rem; }
 .custom-tooltip p { margin: 0.15rem 0; }
 
-.interpretation-section {
-  margin-bottom: 2rem;
-}
-
+/* ─── Interpretation ─────────────────────────────────────────── */
+.interpretation-section { margin-bottom: 2rem; }
 .interpretation-card {
   background: #F9FAFB;
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
-  border-radius: var(--radius-sm);
+  border: 1px solid #E5E7EB;
+  border-left: 4px solid #00A896;
+  border-radius: 8px;
   padding: 1.75rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
-
 .interpretation-card p {
-  color: var(--text-primary);
-  opacity: 0.85;
+  color: #1F2937;
   font-size: 0.92rem;
   line-height: 1.7;
   margin: 0 0 0.5rem;
 }
-
 .interpretation-card p:last-child { margin-bottom: 0; }
 
+/* ─── ML Feature Summary ─────────────────────────────────────── */
+.ml-summary-box {
+  background: #F0F4FF;
+  border: 1px solid #C7D2FE;
+  border-left: 4px solid #0B3D91;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.ml-summary-box h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0B3D91;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 1rem;
+}
+.ml-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1.5rem;
+}
+.ml-feat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(11,61,145,0.08);
+  font-size: 0.8rem;
+}
+.ml-feat-row:last-child { border-bottom: none; }
+.ml-feat-name {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0B3D91;
+  white-space: nowrap;
+  min-width: 130px;
+  font-size: 0.78rem;
+}
+.ml-feat-desc { color: #6B7280; line-height: 1.4; }
+
+/* ─── Footer ─────────────────────────────────────────────────── */
 .report-footer {
   text-align: center;
-  color: var(--text-secondary);
+  color: #6B7280;
   font-size: 0.78rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #E5E7EB;
 }
 
+/* ─── Empty State ─────────────────────────────────────────────── */
 .report-empty {
   display: flex;
   flex-direction: column;
@@ -174,15 +190,93 @@
   gap: 1rem;
   color: var(--text-secondary);
 }
-
 .report-empty span { font-size: 3rem; }
-
 .report-empty button {
   background: var(--bg-solid);
-  color: var(--accent-light);
-  border: 1.5px solid var(--border);
+  color: #fff;
+  border: none;
   border-radius: 10px;
   padding: 0.6rem 1.5rem;
   font-size: 0.9rem;
   cursor: pointer;
+}
+
+/* ─── Shimmer (print-safe no-op) ─────────────────────────────── */
+.card-hover-shimmer { position: relative; overflow: hidden; }
+.card-hover-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%; height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
+  transform: translateX(-150%) skewX(-15deg);
+  pointer-events: none;
+}
+.card-hover-shimmer:hover::after { animation: shimmerSweep 0.8s ease-out forwards; }
+
+/* ═══════════════════════════════════════════════════════════════
+   @media print — this is what the PDF will look like
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  /* Hide everything except the report card */
+  .no-print,
+  .sidebar,
+  .app-layout > aside,
+  nav,
+  .report-actions {
+    display: none !important;
+  }
+
+  /* Reset page margins */
+  @page {
+    margin: 15mm 12mm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #1F2937 !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Make sure animate-in elements are fully visible */
+  .animate-in {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    animation: none !important;
+  }
+
+  .report-outer {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .report-content {
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  /* Force chart containers to have explicit height for print */
+  .recharts-responsive-container {
+    width: 100% !important;
+    height: 220px !important;
+  }
+
+  /* Break pages nicely */
+  .chart-section,
+  .interpretation-section,
+  .ml-summary-box {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Force background colours to print */
+  .stat-card    { background: #F9FAFB !important; -webkit-print-color-adjust: exact; }
+  .ml-summary-box { background: #F0F4FF !important; -webkit-print-color-adjust: exact; }
+  .interpretation-card { background: #F9FAFB !important; -webkit-print-color-adjust: exact; }
 }
