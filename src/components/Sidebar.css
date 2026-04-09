@@ -1,35 +1,36 @@
 .sidebar {
   width: 250px;
-  background-color: var(--bg-solid); /* Deep Blue */
-  color: #fff;
+  /* background color is handled by .glass-panel now! */
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
   position: sticky;
   top: 0;
   height: 100vh;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   z-index: 100;
 }
 
 .sidebar-header {
   padding: 2rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border);
 }
 
 .brand-logo {
   font-family: var(--font-main);
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
   letter-spacing: -0.5px;
+  color: var(--accent); /* Mint green brand pop */
 }
 
 .brand-badge {
   display: inline-block;
-  background: var(--accent); /* Teal */
-  color: #fff;
+  background: rgba(46, 204, 113, 0.15); /* Mint Green faded */
+  color: var(--accent-hover);
+  border: 1px solid rgba(46, 204, 113, 0.3);
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0.2rem 0.6rem;
   border-radius: 4px;
   margin-top: 0.5rem;
@@ -51,7 +52,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.85rem 1.5rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
@@ -60,14 +61,14 @@
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: var(--overlay-tint);
+  color: var(--text-primary);
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border-left-color: var(--accent); /* Teal border highlight */
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-left-color: var(--accent);
 }
 
 .nav-icon {
@@ -77,11 +78,15 @@
 
 .sidebar-footer {
   padding: 1.5rem;
-  background: rgba(0, 0, 0, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+[data-theme="dark"] .sidebar-footer {
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .user-info {
@@ -106,14 +111,15 @@
 .username {
   font-weight: 600;
   font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
 .btn-logout {
   width: 100%;
   padding: 0.5rem;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
@@ -122,20 +128,20 @@
 
 .btn-logout:hover {
   background: rgba(239, 68, 68, 0.15);
-  color: #EF4444;
+  color: var(--red);
   border-color: rgba(239, 68, 68, 0.3);
 }
 
 .tech-stack-label {
   margin-top: 1rem;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-secondary);
   line-height: 1.5;
   text-align: center;
 }
 
 .tech-stack-label strong {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
 }
 
 /* ── Hide sidebar when printing ── */

@@ -5,6 +5,7 @@ import { StockProvider } from './context/StockContext';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import SelectStocksPage from './pages/SelectStocksPage';
@@ -26,6 +27,7 @@ function App() {
               <div className="page-wrapper">
                 <Routes>
               {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
 
@@ -52,9 +54,8 @@ function App() {
                 <ProtectedRoute><FeatureDetailsPage /></ProtectedRoute>
               } />
 
-              {/* Default redirect */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              {/* Default redirect for unknown paths */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </div>

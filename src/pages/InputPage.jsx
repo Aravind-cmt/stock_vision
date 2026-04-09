@@ -76,8 +76,8 @@ const InputPage = () => {
   };
 
   return (
-    <div className="input-container">
-      <div className="input-card animate-in delay-1">
+    <div className="input-container bento-container">
+      <div className="input-card bento-tile bento-large animate-in delay-1">
         <div className="input-header">
           <h1>📥 Analyze a Stock</h1>
           <p>Enter a stock name and date range to fetch historical data</p>
@@ -132,7 +132,7 @@ const InputPage = () => {
         {error && <div className="input-error">{error}</div>}
 
         <div className="input-actions">
-          <button className="btn-fetch" onClick={handleFetch} disabled={loading || !stockInput.trim()}>
+          <button className="btn-fetch glow-accent" onClick={handleFetch} disabled={loading || !stockInput.trim()}>
             {loading ? <><span className="spinner" /> Fetching...</> : '🔄 Fetch Data'}
           </button>
           <button className="btn-csv" onClick={handleDownloadCSV} disabled={fetchedData.length === 0}>
@@ -151,7 +151,7 @@ const InputPage = () => {
       </div>
 
       {/* Supported stocks quick reference */}
-      <div className="stocks-reference animate-in delay-2">
+      <div className="stocks-reference bento-tile bento-large animate-in delay-2">
         <h3>Supported Stocks</h3>
         <div className="ref-grid">
           {STOCK_LIST.map((s) => (

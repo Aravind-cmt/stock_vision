@@ -19,10 +19,9 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar glass-panel">
       <div className="sidebar-header">
         <h2 className="brand-logo">StockVision</h2>
-        <div className="brand-badge">Student Edition</div>
       </div>
 
       <nav className="sidebar-nav">

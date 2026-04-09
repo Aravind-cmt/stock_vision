@@ -44,8 +44,8 @@ const SelectStocksPage = () => {
   ];
 
   return (
-    <div className="select-container">
-      <div className="select-header animate-in delay-1">
+    <div className="select-container bento-container">
+      <div className="select-header bento-tile bento-large animate-in delay-1">
         <h1>Choose Your Top <span className="accent">3</span> Stocks</h1>
         <p>These will appear on your dashboard for quick access</p>
         <div className="select-progress">
@@ -58,7 +58,7 @@ const SelectStocksPage = () => {
       </div>
 
       {groups.map((group) => (
-        <div key={group.label} className="stock-group animate-in delay-2">
+        <div key={group.label} className="stock-group bento-tile bento-large animate-in delay-2">
           <h2 className="group-label">{group.label}</h2>
           <div className="stock-grid">
             {group.items.map((stock) => (

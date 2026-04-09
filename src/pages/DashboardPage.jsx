@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { getSelectedStocks } from '../utils/localStorage';
 import { STOCK_LIST, getBasePrice } from '../utils/stockMap';
@@ -83,11 +83,14 @@ const DashboardPage = () => {
       </div>
 
       {/* ── Hero: greeting + date ── */}
-      <div className="dash-hero animate-in delay-1">
+      <div className="dash-hero bento-tile bento-large animate-in delay-1">
         <div className="dash-greeting">
           <div className="dash-avatar">{currentUser.username.charAt(0).toUpperCase()}</div>
           <div>
-            <h1>Hello, <span className="name-accent">{currentUser.username}</span> 👋</h1>
+            <h1>
+              <span className="live-pulse" title="Live System"></span>
+              Hello, <span className="name-accent">{currentUser.username}</span> 👋
+            </h1>
             <div className="dash-date-row">
               <span className="dash-weekday">{weekday}</span>
               <span className="dash-date-sep">—</span>
@@ -97,7 +100,7 @@ const DashboardPage = () => {
           </div>
         </div>
         <div className="dash-hero-actions">
-          <button className="btn-search" onClick={() => navigate('/input')}>
+          <button className="btn-search glow-accent" onClick={() => navigate('/input')}>
             🔍 Search Other Stocks
           </button>
           <button className="btn-ml" onClick={() => navigate('/ml-placeholder')}>
@@ -106,12 +109,24 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* ── Watchlist with today's price ── */}
-      <section className="dash-section animate-in delay-2">
-        <h2 className="section-title">⭐ Your Watchlist
-          <span className="section-sub">Today's Prices</span>
-        </h2>
-        <div className="stock-cards-row">
+      <div className="bento-container animate-in delay-2">
+        {/* ── Watchlist Column (or full width if small) ── */}
+        <section className="dash-section bento-tile bento-large">
+          <h2 className="section-title">⭐ Your Watchlist
+            <span className="section-sub">Today's Prices</span>
+          </h2>
+          
+          {stocks.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">📈</div>
+              <h3>Your watchlist is feeling light.</h3>
+              <p>Add some stocks to keep an eye on their market vision.</p>
+              <button className="btn-search glow-accent" onClick={() => navigate('/input')}>
+                + Add your first stock
+              </button>
+            </div>
+          ) : (
+            <div className="stock-cards-row">
           {stocks.map((stock) => {
             const p = watchlistPrices[stock.symbol];
             const isProfit = p.changePct >= 0;
@@ -139,9 +154,15 @@ const DashboardPage = () => {
                 
                 <div className="sc-sparkline">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={generateSparkline(stock.symbol, isProfit, p.price)}>
-                      <Line type="monotone" dataKey="val" stroke={isProfit ? '#34C759' : '#FF3B30'} strokeWidth={2} dot={false} isAnimationActive={true} animationDuration={1000} />
-                    </LineChart>
+                    <AreaChart data={generateSparkline(stock.symbol, isProfit, p.price)}>
+                      <defs>
+                        <linearGradient id={`grad-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={isProfit ? '#2ECC71' : '#e74c3c'} stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor={isProfit ? '#2ECC71' : '#e74c3c'} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="val" stroke={isProfit ? '#2ECC71' : '#e74c3c'} fill={`url(#grad-${stock.symbol})`} strokeWidth={2} isAnimationActive={true} animationDuration={1000} />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
 
@@ -149,27 +170,31 @@ const DashboardPage = () => {
               </button>
             );
           })}
-        </div>
-      </section>
-
-      {/* ── Quick Tips ── */}
-      <section className="dash-section animate-in delay-3">
-        <h2 className="section-title">📘 Quick Start</h2>
-        <div className="tips-grid">
-          {[
-            { icon: '1️⃣', title: 'Select a Stock', desc: 'Click any card above or search a stock below' },
-            { icon: '2️⃣', title: 'Choose Date Range', desc: 'Pick start & end dates for the analysis period' },
-            { icon: '3️⃣', title: 'Fetch & Analyze', desc: 'View OHLCV table, charts, and statistics' },
-            { icon: '4️⃣', title: 'Export Report', desc: 'Download CSV data or a full PDF report' },
-          ].map((t) => (
-            <div className="tip-card card-hover-shimmer" key={t.icon}>
-              <span className="tip-icon">{t.icon}</span>
-              <strong>{t.title}</strong>
-              <p>{t.desc}</p>
             </div>
-          ))}
-        </div>
-      </section>
+          )}
+        </section>
+
+        {/* ── Quick Tips ── */}
+        <section className="dash-section bento-tile">
+          <h2 className="section-title">📘 Quick Start</h2>
+          <div className="tips-grid">
+            {[
+              { icon: '1️⃣', title: 'Select a Stock', desc: 'Click any card or search' },
+              { icon: '2️⃣', title: 'Date Range', desc: 'Pick analysis period' },
+              { icon: '3️⃣', title: 'Analyze', desc: 'View OHLCV & charts' },
+              { icon: '4️⃣', title: 'Export', desc: 'Download PDF or CSV' },
+            ].map((t) => (
+              <div className="tip-card card-hover-shimmer" key={t.icon}>
+                <span className="tip-icon">{t.icon}</span>
+                <div>
+                  <strong>{t.title}</strong>
+                  <p>{t.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 };

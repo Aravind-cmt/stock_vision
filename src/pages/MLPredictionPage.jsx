@@ -554,10 +554,10 @@ const MLPredictionPage = () => {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div className="mlp-outer">
+    <div className="mlp-outer bento-container">
 
       {/* Header */}
-      <div className="mlp-header">
+      <div className="mlp-header bento-tile bento-large">
         <div className="mlp-title-group">
           <h1>🌲 ML Prediction Engine</h1>
           <p>Features pre-computed &amp; cached · only latest candle fetched daily · XGBoost prediction</p>
@@ -566,7 +566,7 @@ const MLPredictionPage = () => {
       </div>
 
       {/* Controls */}
-      <div className="mlp-controls">
+      <div className="mlp-controls bento-tile bento-large">
         <div className="mlp-field">
           <label>Stock / Index</label>
           <select value={symbol} onChange={e => setSymbol(e.target.value)} disabled={loading}>
@@ -580,10 +580,10 @@ const MLPredictionPage = () => {
           </select>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <button className="btn-predict" onClick={fullTrain} disabled={loading} title="Fetch all history, engineer features, train model, cache everything">
+          <button className="btn-predict glow-accent" onClick={fullTrain} disabled={loading} title="Fetch all history, engineer features, train model, cache everything">
             {loading ? '⏳ Running…' : '🔁 Full Train (2000→Today)'}
           </button>
-          <button className="btn-update" onClick={dailyUpdate} disabled={loading || !cacheInfo} title="Only fetch today's candle and update the prediction">
+          <button className="btn-update glow-accent" onClick={dailyUpdate} disabled={loading || !cacheInfo} title="Only fetch today's candle and update the prediction">
             📅 Add Today's Data
           </button>
           <button className="btn-danger" onClick={() => clearCache(symbol)} disabled={loading} title="Clear cached model for this symbol">
@@ -629,7 +629,7 @@ const MLPredictionPage = () => {
       {results && (
         <>
           {/* Next-Day Hero */}
-          <div className="next-day-hero">
+          <div className="next-day-hero bento-tile bento-large">
             <div className="ndh-inner">
               <div className="ndh-label">📅 Next Trading Day Forecast</div>
               <div className="ndh-date">{results.nextDate}</div>
