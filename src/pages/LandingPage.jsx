@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { BarChart2, TrendingUp, Bot, Smartphone } from 'lucide-react';
 import '../styles/Landing.css';
 
 const LandingPage = () => {
@@ -17,8 +18,8 @@ const LandingPage = () => {
   return (
     <div className="landing-container">
       <nav className="landing-nav animate-in delay-1">
-        <div className="landing-logo">
-          <span>📊</span> StockVision
+        <div className="landing-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <BarChart2 size={24} className="text-primary"/> StockVision
         </div>
         <div className="landing-nav-actions">
           <button className="btn-login" onClick={() => navigate('/login')}>Log In</button>
@@ -53,7 +54,7 @@ const LandingPage = () => {
         <div className="features-grid">
           
           <div className="feature-card bento-tile">
-            <div className="feature-icon">📈</div>
+            <div className="feature-icon" style={{ color: 'var(--accent)' }}><TrendingUp size={32} /></div>
             <h3>Dynamic Visualizations</h3>
             <p>
               Beautifully rendered area and sparkline charts with integrated sentiment gauges
@@ -62,7 +63,7 @@ const LandingPage = () => {
           </div>
 
           <div className="feature-card bento-tile">
-            <div className="feature-icon">🤖</div>
+            <div className="feature-icon" style={{ color: 'var(--accent)' }}><Bot size={32} /></div>
             <h3>XGBoost ML Predictions</h3>
             <p>
               Simulate high-end quantitative trading strategies on historical data. Our XGBoost engine predicts
@@ -71,7 +72,7 @@ const LandingPage = () => {
           </div>
 
           <div className="feature-card bento-tile">
-            <div className="feature-icon">📱</div>
+            <div className="feature-icon" style={{ color: 'var(--accent)' }}><Smartphone size={32} /></div>
             <h3>FinTech Dashboard</h3>
             <p>
               Assemble a lightning-fast bento-layout dashboard of your favorite stocks and 

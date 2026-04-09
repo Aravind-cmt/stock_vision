@@ -2,6 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { useStock } from '../context/StockContext';
 import { downloadCSV } from '../utils/csvExport';
 import { isINR } from '../utils/stockMap';
+import { 
+  Inbox, TrendingUp, TrendingDown, DollarSign, 
+  Calendar, Table, FileDown, ArrowLeft, ArrowRight,
+  Info, CircleDot
+} from 'lucide-react';
 import '../styles/Output.css';
 
 const OutputPage = () => {
@@ -12,10 +17,13 @@ const OutputPage = () => {
 
   if (!stockData || stockData.length === 0) {
     return (
-      <div className="output-empty">
-        <span>📭</span>
-        <p>No data to display. Go back and fetch some stock data first.</p>
-        <button onClick={() => navigate('/input')}>← Go to Input</button>
+      <div className="output-empty empty-state" style={{ margin: '40px auto', maxWidth: '600px' }}>
+        <Inbox size={48} className="empty-icon" />
+        <h3 style={{ marginTop: '16px', color: 'var(--text-primary)' }}>No data to display</h3>
+        <p style={{ color: 'var(--text-secondary)' }}>Go back and fetch some stock data first.</p>
+        <button className="btn-primary" onClick={() => navigate('/input')} style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ArrowLeft size={16} /> Go to Input
+        </button>
       </div>
     );
   }
@@ -26,47 +34,59 @@ const OutputPage = () => {
   const isProfit = endPrice >= startPrice;
 
   const featureCards = [
-    { label: 'Starting Price', value: `${currency}${startPrice.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`, icon: '🟢' },
-    { label: 'Ending Price',   value: `${currency}${endPrice.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`, icon: isProfit ? '📈' : '📉' },
+    { label: 'Starting Price', value: `${currency}${startPrice.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`, icon: CircleDot, iconColor: 'var(--accent)' },
+    { label: 'Ending Price',   value: `${currency}${endPrice.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`, icon: isProfit ? TrendingUp : TrendingDown, iconColor: isProfit ? 'var(--green)' : 'var(--red)' },
     {
       label: 'Market Change',
       value: `${isProfit ? '+' : ''}${marketChange}%`,
-      icon: isProfit ? '💹' : '📉',
+      icon: DollarSign,
+      iconColor: isProfit ? 'var(--green)' : 'var(--red)',
       className: isProfit ? 'positive' : 'negative',
     },
-    { label: 'Total Trading Days', value: stockData.length, icon: '📅' },
+    { label: 'Total Trading Days', value: stockData.length, icon: Calendar, iconColor: 'var(--text-primary)' },
   ];
 
   return (
     <div className="output-container">
-      <div className="bento-container">
+      <div className="bento-container" style={{ maxWidth: '1400px', margin: '0 auto' }}>
         {/* Header */}
-        <div className="output-header bento-tile bento-large animate-in delay-1">
+        <div className="bento-tile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
           <div>
-            <h1>📊 {activeSock?.name} — Data Output</h1>
-            <p>{activeSock?.label} · {stockData[0].date} → {stockData[stockData.length - 1].date}</p>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 8px 0', color: 'var(--text-primary)' }}><Table size={28} className="text-primary"/> {activeSock?.name} — Data Output</h1>
+            <p className="text-secondary" style={{ margin: 0 }}>{activeSock?.label} · {stockData[0].date} → {stockData[stockData.length - 1].date}</p>
           </div>
-          <div className="output-header-actions">
-            <button className="btn-outline" onClick={() => navigate('/input')}>← Edit</button>
-            <button className="btn-csv-out" onClick={() => downloadCSV(stockData, `${activeSock?.name}_data.csv`)}>⬇️ CSV</button>
-            <button className="btn-primary glow-accent" onClick={() => navigate('/report')}>View Report →</button>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button className="btn-secondary" onClick={() => navigate('/input')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ArrowLeft size={16} /> Edit
+            </button>
+            <button className="btn-secondary" onClick={() => downloadCSV(stockData, `${activeSock?.name}_data.csv`)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileDown size={16} /> CSV
+            </button>
+            <button className="btn-primary" onClick={() => navigate('/report')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              View Report <ArrowRight size={16} />
+            </button>
           </div>
         </div>
 
         {isSimulated && (
-          <div className="mock-notice bento-tile bento-large animate-in delay-1">
-            ℹ️ Yahoo Finance data unavailable for this stock — prices are <strong>simulated</strong>. Try AAPL, TSLA or GOOGL for real data.
+          <div style={{ padding: '16px', background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.2)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-primary)' }}>
+            <Info size={20} style={{ color: '#38bdf8' }} /> Yahoo Finance data unavailable for this stock — prices are <strong>simulated</strong>. Try AAPL, TSLA or GOOGL for real data.
           </div>
         )}
 
         {/* Feature cards */}
-        {featureCards.map((card) => (
-          <div key={card.label} className={`bento-tile card-hover-shimmer ${card.className || ''}`}>
-            <span className="feat-icon">{card.icon}</span>
-            <span className="feat-value">{card.value}</span>
-            <span className="feat-label">{card.label}</span>
-          </div>
-        ))}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          {featureCards.map((card) => {
+            const CIcon = card.icon;
+            return (
+              <div key={card.label} className={`bento-tile ${card.className || ''}`} style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '20px' }}>
+                <span style={{ color: card.iconColor, marginBottom: '4px' }}><CIcon size={24} /></span>
+                <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)' }}>{card.value}</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{card.label}</span>
+              </div>
+            );
+          })}
+        </div>
         
         {/* Sentiment Indicator */}
         <div className="bento-tile bento-large animate-in delay-2" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -82,19 +102,19 @@ const OutputPage = () => {
         </div>
 
         {/* OHLCV table */}
-        <div className="table-wrapper bento-tile bento-large animate-in delay-3" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="ohlcv-table">
+        <div className="table-wrapper bento-tile" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto', maxHeight: '600px' }}>
+            <table className="dark-table">
               <thead>
                 <tr>
                   <th>Date</th>
                   <th>Weekday</th>
-                  <th>Open</th>
-                  <th>High</th>
-                  <th>Low</th>
-                  <th>Close</th>
-                  <th>Volume</th>
-                  <th>Change</th>
+                  <th className="col-num">Open</th>
+                  <th className="col-num">High</th>
+                  <th className="col-num">Low</th>
+                  <th className="col-num">Close</th>
+                  <th className="col-num">Volume</th>
+                  <th className="col-num">Change</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,15 +122,15 @@ const OutputPage = () => {
                   const change = ((row.close - row.open) / row.open) * 100;
                   const profit = row.close >= row.open;
                   return (
-                    <tr key={row.date} className={profit ? 'row-profit' : 'row-loss'}>
-                      <td className="td-date">{row.date}</td>
-                      <td className="td-weekday">{row.weekday}</td>
-                      <td>{currency}{row.open.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-                      <td className="td-high">{currency}{row.high.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-                      <td className="td-low">{currency}{row.low.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-                      <td className="td-close">{currency}{row.close.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-                      <td>{row.volume.toLocaleString()}</td>
-                      <td className={profit ? 'change-positive' : 'change-negative'}>
+                    <tr key={row.date}>
+                      <td style={{ color: 'var(--text-secondary)' }}>{row.date}</td>
+                      <td style={{ color: 'var(--text-muted)' }}>{row.weekday}</td>
+                      <td className="col-num">{currency}{row.open.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                      <td className="col-num" style={{ color: 'var(--text-primary)' }}>{currency}{row.high.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                      <td className="col-num" style={{ color: 'var(--text-secondary)' }}>{currency}{row.low.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                      <td className="col-num" style={{ fontWeight: 600 }}>{currency}{row.close.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+                      <td className="col-num" style={{ color: 'var(--text-muted)' }}>{row.volume.toLocaleString()}</td>
+                      <td className="col-num" style={{ color: profit ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
                         {profit ? '+' : ''}{change.toFixed(2)}%
                       </td>
                     </tr>

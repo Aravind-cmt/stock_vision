@@ -1,11 +1,12 @@
 /* ── Marquee Ticker ── */
 .ticker-wrap {
   overflow: hidden;
-  background: var(--bg-solid);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
   padding: 0.55rem 0;
-  position: static; /* Let it scroll out in sidebar layout */
+  position: static;
   z-index: 50;
+  opacity: 0.8; /* Reduced brightness */
 }
 
 .ticker-track {
@@ -66,7 +67,7 @@
 .dash-weekday {
   font-size: 0.92rem;
   font-weight: 700;
-  color: var(--accent-light);
+  color: var(--accent);
 }
 
 .dash-date-sep {
@@ -81,7 +82,7 @@
 .dash-time {
   font-size: 0.78rem;
   color: var(--text-secondary);
-  background: var(--bg-solid);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: 100px;
   padding: 0.1rem 0.5rem;
@@ -124,21 +125,33 @@
 }
 
 .sc-badge--profit {
-  background: transparent;
   color: var(--green);
   border: 1px solid var(--green);
 }
 
 .sc-badge--loss {
-  background: transparent;
   color: var(--red);
   border: 1px solid var(--red);
 }
 
 .dash-container {
-  max-width: 1100px;
+  max-width: 1400px; /* Expand for better desktop usage */
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 1.5rem 2rem 4rem;
+  width: 100%;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: 7fr 3fr; /* 70/30 layout */
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .dash-hero {
@@ -157,20 +170,15 @@
   justify-content: center;
   text-align: center;
   padding: 3rem 1rem;
-  background: rgba(0, 0, 0, 0.02);
-  border: 1px dashed var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border-light);
   border-radius: var(--radius-md);
-  margin-top: 1rem;
-}
-
-[data-theme="dark"] .empty-state {
-  background: rgba(0, 0, 0, 0.2);
 }
 
 .empty-icon {
-  font-size: 3rem;
   margin-bottom: 1rem;
   opacity: 0.8;
+  color: var(--text-secondary);
 }
 
 .empty-state h3 {
@@ -189,22 +197,21 @@
 .dash-greeting {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.2rem;
 }
 
 .dash-avatar {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  background: var(--accent);
+  color: #0b1220;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px var(--overlay-tint);
 }
 
 .dash-greeting h1 {
@@ -215,13 +222,7 @@
 }
 
 .name-accent {
-  color: var(--accent-light);
-}
-
-.dash-date {
-  color: rgba(255,255,255,0.45);
-  font-size: 0.85rem;
-  margin: 0;
+  color: var(--text-primary);
 }
 
 .dash-hero-actions {
@@ -230,48 +231,9 @@
   flex-wrap: wrap;
 }
 
-.btn-search, .btn-ml {
-  padding: 0.65rem 1.25rem;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.btn-search {
-  background: var(--bg-solid);
-  border: 1px solid var(--border);
-  color: var(--accent-light);
-}
-
-.btn-search:hover {
-  background: var(--overlay-tint);
-  border-color: var(--accent);
-  transform: translateY(-1px);
-}
-
-.btn-ml {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  cursor: default;
-}
-
-.coming-soon {
-  font-size: 0.65rem;
-  background: rgba(251,191,36,0.15);
-  border: 1px solid rgba(251,191,36,0.3);
-  color: #fbbf24;
-  border-radius: 4px;
-  padding: 0.1rem 0.35rem;
-}
-
 .dash-section {
-  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-title {
@@ -279,21 +241,21 @@
   font-weight: 600;
   color: var(--text-primary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   margin: 0 0 1.25rem;
 }
 
 .stock-cards-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .stock-card {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -301,56 +263,52 @@
   gap: 1rem;
   text-align: left;
   transition: all 0.2s ease;
-  position: relative;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .stock-card:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .sc-left {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 250px;
 }
 
 .sc-icon {
-  font-size: 1.6rem;
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: var(--bg-solid);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-secondary);
 }
 
 .sc-body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
 }
 
 .sc-name {
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .sc-label {
   font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .sc-mock {
   font-size: 0.65rem;
-  background: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
   border-radius: 4px;
@@ -359,61 +317,52 @@
 }
 
 .sc-sparkline {
-  width: 90px;
+  width: 120px;
   height: 40px;
   opacity: 0.8;
-  margin-left: auto;
-  margin-right: 1.5rem;
+  flex: 1;
+  max-width: 200px;
 }
 
 .sc-arrow {
   color: var(--text-secondary);
-  background: rgba(255,255,255,0.05);
-  border-radius: 50%;
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
   transition: all 0.3s;
 }
 
 .stock-card:hover .sc-arrow {
-  background: var(--accent);
-  color: #fff;
+  color: var(--accent);
   transform: translateX(3px);
 }
 
-.tips-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .tip-card {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.25rem;
+  border-radius: var(--radius-sm);
+  padding: 1rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  gap: 12px;
+  align-items: center;
 }
 
-.tip-icon {
-  font-size: 1.4rem;
-  margin-bottom: 0.25rem;
-}
-
-.tip-card strong {
-  color: var(--text-primary);
-  font-size: 0.95rem;
-}
-
-.tip-card p {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  margin: 0;
-  line-height: 1.5;
+.tip-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
 }

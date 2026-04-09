@@ -4,6 +4,11 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   ResponsiveContainer, Legend,
 } from 'recharts';
+import { 
+  TreePine, Download, Settings, Shuffle, Target, 
+  Calendar, TrendingUp, TrendingDown, Zap, Trash2, 
+  RefreshCw, BarChart2, CheckCircle2, AlertTriangle, AlertCircle
+} from 'lucide-react';
 import '../styles/MLPrediction.css';
 
 // ─── SYMBOLS ─────────────────────────────────────────────────────────────────
@@ -324,11 +329,11 @@ function computeMetrics(rows, trees, base, splitAt) {
 
 // ─── PIPELINE STEPS ──────────────────────────────────────────────────────────
 const PIPELINE_STEPS = [
-  { icon: '📥', label: 'Fetch Data',        key: 'fetch'    },
-  { icon: '⚙️', label: 'Engineer Features', key: 'features' },
-  { icon: '🔀', label: 'Train/Test Split',  key: 'split'    },
-  { icon: '🌲', label: 'XGBoost Train',     key: 'train'    },
-  { icon: '🎯', label: 'Predict Next Day',  key: 'predict'  },
+  { icon: Download, label: 'Fetch Data',        key: 'fetch'    },
+  { icon: Settings, label: 'Engineer Features', key: 'features' },
+  { icon: Shuffle,  label: 'Train/Test Split',  key: 'split'    },
+  { icon: TreePine, label: 'XGBoost Train',     key: 'train'    },
+  { icon: Target,   label: 'Predict Next Day',  key: 'predict'  },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -397,7 +402,7 @@ const MLPredictionPage = () => {
     const metrics = computeMetrics(rows, trees, base, splitAt);
 
     setResults({ ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt, dateRange: `${rows[0].date} → ${liveDate}` });
-    const age = liveDate < TODAY ? `⚠️ Data is from ${liveDate} — click "Add Today's Data" to update.` : `✅ Cache valid · Last data: ${liveDate} · Trained: ${trainedAt}`;
+    const age = liveDate < TODAY ? `[Stale] Data is from ${liveDate} — click "Add Today's Data" to update.` : `[Valid] Last data: ${liveDate} · Trained: ${trainedAt}`;
     setStatus({ type: liveDate < TODAY ? 'info' : 'success', msg: age });
     setCacheInfo({ lastDate: liveDate, totalRows, trainedAt });
   }
@@ -613,16 +618,19 @@ const MLPredictionPage = () => {
       </div>
 
       {/* Pipeline Steps */}
-      <div className="mlp-pipeline">
-        {PIPELINE_STEPS.map((s, i) => (
-          <span key={s.key} style={{ display: 'flex', alignItems: 'center' }}>
-            <div className={`pipeline-step ${activeStep === i ? 'active' : ''}`}>
-              <span className="pipeline-step-icon">{s.icon}</span>
-              <span>{s.label}</span>
-            </div>
-            {i < PIPELINE_STEPS.length - 1 && <span className="pipeline-arrow">→</span>}
-          </span>
-        ))}
+      <div className="mlp-pipeline bento-tile bento-large" style={{ marginTop: '16px' }}>
+        {PIPELINE_STEPS.map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <span key={s.key} style={{ display: 'flex', alignItems: 'center' }}>
+              <div className={`pipeline-step ${activeStep === i ? 'active' : ''}`}>
+                <span className="pipeline-step-icon"><Icon size={20} /></span>
+                <span>{s.label}</span>
+              </div>
+              {i < PIPELINE_STEPS.length - 1 && <span className="pipeline-arrow">→</span>}
+            </span>
+          );
+        })}
       </div>
 
       {/* ── RESULTS ── */}
@@ -631,7 +639,7 @@ const MLPredictionPage = () => {
           {/* Next-Day Hero */}
           <div className="next-day-hero bento-tile bento-large">
             <div className="ndh-inner">
-              <div className="ndh-label">📅 Next Trading Day Forecast</div>
+              <div className="ndh-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Calendar size={20} /> Next Trading Day Forecast</div>
               <div className="ndh-date">{results.nextDate}</div>
               <div className={`ndh-price ${results.diff >= 0 ? 'up' : 'down'}`}>
                 ₹{results.nextPrice.toFixed(2)}
@@ -650,7 +658,7 @@ const MLPredictionPage = () => {
               <div className="nds-item"><span className="nds-k">Train Samples</span><span className="nds-v">{results.trainSize?.toLocaleString()}</span></div>
               <div className="nds-item"><span className="nds-k">Test Samples</span><span className="nds-v">{results.testSize?.toLocaleString()}</span></div>
               <div className="nds-item"><span className="nds-k">Trained At</span><span className="nds-v">{results.trainedAt}</span></div>
-              <div className="nds-item"><span className="nds-k">Signal</span><span className="nds-v" style={{ color: results.diff >= 0 ? '#34d399' : '#f87171' }}>{results.diff >= 0 ? '📈 BUY SIGNAL' : '📉 SELL SIGNAL'}</span></div>
+              <div className="nds-item"><span className="nds-k">Signal</span><span className="nds-v" style={{ color: results.diff >= 0 ? 'var(--green)' : 'var(--red)', display: 'flex', alignItems: 'center', gap: '6px' }}>{results.diff >= 0 ? <><TrendingUp size={16}/> BUY SIGNAL</> : <><TrendingDown size={16}/> SELL SIGNAL</>}</span></div>
             </div>
           </div>
 
@@ -672,76 +680,80 @@ const MLPredictionPage = () => {
           </div>
 
           {/* Charts */}
-          <div className="mlp-charts">
+          <div className="grid-12" style={{ marginBottom: '24px' }}>
             {results.histChart && (
-              <div className="mlp-chart-card">
-                <h2>📊 Full Price History</h2>
-                <ResponsiveContainer width="100%" height={200}>
+              <div className="bento-tile" style={{ gridColumn: 'span 6' }}>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BarChart2 size={20} /> Full Price History</h2>
+                <ResponsiveContainer width="100%" height={240}>
                   <LineChart data={results.histChart} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
                     <CartesianGrid stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} tickLine={false} interval={Math.floor((results.histChart?.length || 1) / 10)} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                    <XAxis dataKey="date" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} tickLine={false} interval={Math.floor((results.histChart?.length || 1) / 10)} />
+                    <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line type="monotone" dataKey="close" stroke="#6c63ff" strokeWidth={1.5} dot={false} name="Close" />
+                    <Line type="monotone" dataKey="close" stroke="var(--accent)" strokeWidth={1.5} dot={false} name="Close" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             )}
 
-            <div className="mlp-chart-card">
-              <h2>📈 Actual vs Predicted Next-Day Close (Test Set)</h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={results.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <div className="bento-tile" style={{ gridColumn: 'span 6' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><TrendingUp size={20} /> Actual vs Predicted (Test Set)</h2>
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={results.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} tickLine={false} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${v.toFixed(0)}`} />
+                  <XAxis dataKey="date" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickLine={false} />
+                  <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${v.toFixed(0)}`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Line type="monotone" dataKey="actual"    stroke="#34d399" strokeWidth={2} dot={false} name="Actual Next-Day Close" />
-                  <Line type="monotone" dataKey="predicted" stroke="#a78bfa" strokeWidth={2} dot={false} name="XGBoost Predicted" strokeDasharray="5 3" />
+                  <Line type="monotone" dataKey="actual"    stroke="var(--green)" strokeWidth={2} dot={false} name="Actual Close" />
+                  <Line type="monotone" dataKey="predicted" stroke="var(--text-secondary)" strokeWidth={2} dot={false} name="Predicted" strokeDasharray="5 3" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </div>
 
+          {/* Predictions table */}
+          <div className="grid-12" style={{ marginBottom: '24px' }}>
             {results.fi && (
-              <div className="mlp-chart-card">
-                <h2>⚡ Feature Importance</h2>
+              <div className="bento-tile" style={{ gridColumn: 'span 4' }}>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}><Zap size={20} /> Feature Importance</h2>
                 {results.fi.map(f => (
-                  <div key={f.name} className="fi-row">
-                    <div className="fi-label">{f.name}</div>
-                    <div className="fi-bar-track"><div className="fi-bar-fill" style={{ width: `${f.importance}%` }} /></div>
-                    <div className="fi-val">{f.importance}%</div>
+                  <div key={f.name} className="fi-row" style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                    <div className="fi-label" style={{ width: '80px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{f.name}</div>
+                    <div className="fi-bar-track" style={{ flex: 1, height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div className="fi-bar-fill" style={{ width: `${f.importance}%`, height: '100%', background: 'var(--accent)' }} />
+                    </div>
+                    <div className="fi-val" style={{ width: '40px', textAlign: 'right', fontSize: '0.8rem', fontWeight: 600 }}>{f.importance}%</div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Predictions table */}
-          <div className="mlp-chart-card" style={{ marginBottom: '2rem' }}>
-            <h2>🗓️ Last 20 Test Predictions (Next-Day Close ₹)</h2>
-            <div className="mlp-table-wrap">
-              <table className="mlp-table">
-                <thead>
-                  <tr>
-                    <th>Date (t)</th><th>Actual Close(t+1) ₹</th><th>Predicted ₹</th>
-                    <th>Diff ₹</th><th>Error %</th><th>RSI</th><th>Spike</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.tableRows?.map((r, i) => (
-                    <tr key={i}>
-                      <td>{r.date}</td>
-                      <td>{r.actual}</td>
-                      <td className={r.dir === 'up' ? 'pred-up' : 'pred-down'}>{r.predicted}</td>
-                      <td className={r.diff >= 0 ? 'pred-up' : 'pred-down'}>{r.diff >= 0 ? '+' : ''}{r.diff}</td>
-                      <td>{r.err}%</td>
-                      <td className={parseFloat(r.rsi) > 70 ? 'pred-down' : parseFloat(r.rsi) < 30 ? 'pred-up' : ''}>{r.rsi}</td>
-                      <td className={r.spike === 1 ? 'pred-down' : ''}>{r.spike === 1 ? '⚡ Yes' : '–'}</td>
+            <div className="bento-tile" style={{ gridColumn: results.fi ? 'span 8' : 'span 12' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}><Calendar size={20} /> Last 20 Test Predictions</h2>
+              <div style={{ overflowX: 'auto', maxHeight: '400px' }}>
+                <table className="dark-table">
+                  <thead>
+                    <tr>
+                      <th>Date (t)</th><th className="col-num">Actual ₹</th><th className="col-num">Predicted ₹</th>
+                      <th className="col-num">Diff ₹</th><th className="col-num">Error %</th><th className="col-num">RSI</th><th style={{textAlign: 'center'}}>Spike</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {results.tableRows?.map((r, i) => (
+                      <tr key={i}>
+                        <td style={{ color: 'var(--text-secondary)' }}>{r.date}</td>
+                        <td className="col-num">{r.actual}</td>
+                        <td className="col-num" style={{ color: r.dir === 'up' ? 'var(--green)' : 'var(--red)' }}>{r.predicted}</td>
+                        <td className="col-num" style={{ color: r.diff >= 0 ? 'var(--green)' : 'var(--red)' }}>{r.diff >= 0 ? '+' : ''}{r.diff}</td>
+                        <td className="col-num text-muted">{r.err}%</td>
+                        <td className="col-num" style={{ color: parseFloat(r.rsi) > 70 ? 'var(--red)' : parseFloat(r.rsi) < 30 ? 'var(--green)' : 'var(--text-secondary)' }}>{r.rsi}</td>
+                        <td style={{ color: r.spike === 1 ? 'var(--accent)' : 'var(--text-secondary)', textAlign: 'center' }}>{r.spike === 1 ? <Zap size={14} style={{ display: 'inline-block' }} /> : '–'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </>
@@ -749,14 +761,11 @@ const MLPredictionPage = () => {
 
       {/* Empty */}
       {!results && !loading && (
-        <div className="mlp-empty">
-          <span>🌲</span>
+        <div className="empty-state" style={{ marginTop: '24px' }}>
+          <TreePine size={48} className="empty-icon" />
+          <h3>Model Not Trained</h3>
           <p>
-            Click <strong>🔁 Full Train (2000→Today)</strong> to fetch all history, compute features,
-            train XGBoost, and cache the model.
-            <br /><br />
-            After that, every day just click <strong>📅 Add Today's Data</strong> — it only fetches
-            the latest candle and updates the prediction instantly!
+            Click <strong>Full Train</strong> to fetch history, engineer features, train XGBoost, and cache the model.
           </p>
         </div>
       )}

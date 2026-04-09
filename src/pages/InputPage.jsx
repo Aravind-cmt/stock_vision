@@ -4,6 +4,7 @@ import { useStock } from '../context/StockContext';
 import { STOCK_LIST, nameToSymbol } from '../utils/stockMap';
 import { fetchStockData } from '../utils/apiService';
 import { downloadCSV } from '../utils/csvExport';
+import { Download, RefreshCw, CheckCircle2, ArrowRight, FileDown, Search, Check } from 'lucide-react';
 import '../styles/Input.css';
 
 const InputPage = () => {
@@ -79,8 +80,8 @@ const InputPage = () => {
     <div className="input-container bento-container">
       <div className="input-card bento-tile bento-large animate-in delay-1">
         <div className="input-header">
-          <h1>📥 Analyze a Stock</h1>
-          <p>Enter a stock name and date range to fetch historical data</p>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Download size={24} className="text-primary"/> Analyze a Stock</h1>
+          <p className="text-secondary">Enter a stock name and date range to fetch historical data</p>
         </div>
 
         <div className="form-row">
@@ -94,15 +95,16 @@ const InputPage = () => {
                 onFocus={() => setShowSugg(true)}
                 onBlur={() => setTimeout(() => setShowSugg(false), 150)}
                 placeholder="e.g. AAPL, TSLA, RELIANCE"
-                className="styled-input"
+                className="dark-input"
                 disabled={!!preStock}
               />
+              <Search className="input-search-icon" size={16} />
               {showSugg && suggestions.length > 0 && (
                 <div className="suggestions-box">
                   {suggestions.map((s) => (
                     <button key={s.symbol} className="suggestion-item" onMouseDown={() => selectSuggestion(s)}>
                       <strong>{s.name}</strong>
-                      <span>{s.label}</span>
+                      <span className="text-muted">{s.label}</span>
                       {s.mock && <span className="sugg-mock">Simulated</span>}
                     </button>
                   ))}
@@ -110,8 +112,8 @@ const InputPage = () => {
               )}
             </div>
             {resolvedStock && (
-              <div className="resolved-badge">
-                ✓ Resolved: <strong>{resolvedStock.label}</strong> ({resolvedStock.symbol})
+              <div className="resolved-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Check size={14} className="text-green" /> Resolved: <strong>{resolvedStock.label}</strong> ({resolvedStock.symbol})
                 {resolvedStock.mock && <span className="resolved-mock"> · Simulated Data</span>}
               </div>
             )}
@@ -121,30 +123,30 @@ const InputPage = () => {
         <div className="form-row two-col">
           <div className="form-field">
             <label>Start Date</label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="styled-input" />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="dark-input" />
           </div>
           <div className="form-field">
             <label>End Date</label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="styled-input" max={new Date().toISOString().slice(0,10)} />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="dark-input" max={new Date().toISOString().slice(0,10)} />
           </div>
         </div>
 
-        {error && <div className="input-error">{error}</div>}
+        {error && <div className="input-error" style={{ color: 'var(--red)', background: 'rgba(239,68,68,0.1)', padding: '12px', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>{error}</div>}
 
-        <div className="input-actions">
-          <button className="btn-fetch glow-accent" onClick={handleFetch} disabled={loading || !stockInput.trim()}>
-            {loading ? <><span className="spinner" /> Fetching...</> : '🔄 Fetch Data'}
+        <div className="input-actions" style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <button className="btn-primary" onClick={handleFetch} disabled={loading || !stockInput.trim()} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {loading ? <><span className="loading-spinner" /> Fetching...</> : <><RefreshCw size={16} /> Fetch Data</>}
           </button>
-          <button className="btn-csv" onClick={handleDownloadCSV} disabled={fetchedData.length === 0}>
-            ⬇️ Download CSV
+          <button className="btn-secondary" onClick={handleDownloadCSV} disabled={fetchedData.length === 0} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FileDown size={16} /> Download CSV
           </button>
         </div>
 
         {fetchedData.length > 0 && (
-          <div className="fetch-success">
-            <span>✅ Loaded <strong>{fetchedData.length}</strong> trading days for <strong>{resolvedStock?.name}</strong></span>
-            <button className="btn-view-output" onClick={() => navigate('/output')}>
-              View Data Table →
+          <div className="fetch-success" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'rgba(34,197,94,0.05)', border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}><CheckCircle2 size={18} className="text-green"/> Loaded <strong>{fetchedData.length}</strong> trading days for <strong>{resolvedStock?.name}</strong></span>
+            <button className="btn-primary btn-sm" onClick={() => navigate('/output')} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              View Data Table <ArrowRight size={14} />
             </button>
           </div>
         )}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { BarChart2 } from 'lucide-react';
 import '../styles/Auth.css';
 
 const LoginPage = () => {
@@ -32,7 +33,7 @@ const LoginPage = () => {
       </div>
       <div className="auth-card animate-in delay-1">
         <div className="auth-header">
-          <span className="auth-logo">📊</span>
+          <span className="auth-logo" style={{ color: 'var(--accent)', display: 'inline-flex' }}><BarChart2 size={32} /></span>
           <h1>Welcome Back</h1>
           <p>Sign in to your StockVision account</p>
         </div>
@@ -43,6 +44,7 @@ const LoginPage = () => {
             <input
               type="email"
               name="email"
+              className="dark-input"
               value={form.email}
               onChange={handleChange}
               placeholder="you@example.com"
@@ -54,6 +56,7 @@ const LoginPage = () => {
             <input
               type="password"
               name="password"
+              className="dark-input"
               value={form.password}
               onChange={handleChange}
               placeholder="Enter your password"

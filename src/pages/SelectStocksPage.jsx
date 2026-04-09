@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { STOCK_LIST } from '../utils/stockMap';
 import { saveSelectedStocks } from '../utils/localStorage';
+import { MapPin, TrendingUp, Globe2, Check, Plus } from 'lucide-react';
 import '../styles/SelectStocks.css';
 
 const REQUIRED = 3;
@@ -38,9 +39,9 @@ const SelectStocksPage = () => {
   };
 
   const groups = [
-    { label: '🇮🇳 Indian Stocks', items: STOCK_LIST.filter((s) => s.country === 'IN' && s.sector !== 'Index') },
-    { label: '📈 Market Indices', items: STOCK_LIST.filter((s) => s.sector === 'Index') },
-    { label: '🌍 Global Stocks', items: STOCK_LIST.filter((s) => s.country === 'US') },
+    { label: 'Indian Stocks', icon: MapPin, items: STOCK_LIST.filter((s) => s.country === 'IN' && s.sector !== 'Index') },
+    { label: 'Market Indices', icon: TrendingUp, items: STOCK_LIST.filter((s) => s.sector === 'Index') },
+    { label: 'Global Stocks', icon: Globe2, items: STOCK_LIST.filter((s) => s.country === 'US') },
   ];
 
   return (
@@ -57,9 +58,13 @@ const SelectStocksPage = () => {
         {error && <div className="select-error">{error}</div>}
       </div>
 
-      {groups.map((group) => (
+      {groups.map((group) => {
+        const GIcon = group.icon;
+        return (
         <div key={group.label} className="stock-group bento-tile bento-large animate-in delay-2">
-          <h2 className="group-label">{group.label}</h2>
+          <h2 className="group-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <GIcon size={20} className="text-secondary" /> {group.label}
+          </h2>
           <div className="stock-grid">
             {group.items.map((stock) => (
               <button
@@ -70,12 +75,14 @@ const SelectStocksPage = () => {
                 <span className="stock-option-name">{stock.name}</span>
                 <span className="stock-option-label">{stock.label}</span>
                 {stock.mock && <span className="mock-badge">Simulated</span>}
-                <div className="check-indicator">{isSelected(stock) ? '✓' : '+'}</div>
+                <div className="check-indicator" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {isSelected(stock) ? <Check size={16} /> : <Plus size={16} />}
+                </div>
               </button>
             ))}
           </div>
         </div>
-      ))}
+      )})}
 
       <div className="select-footer animate-in delay-3">
         <button

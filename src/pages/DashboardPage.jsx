@@ -4,11 +4,16 @@ import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { getSelectedStocks } from '../utils/localStorage';
 import { STOCK_LIST, getBasePrice } from '../utils/stockMap';
+import { 
+  Monitor, Zap, TrendingUp, Cpu, Car, ShoppingCart, 
+  Search, GitMerge, ArrowRight, BarChart2,
+  ListOrdered, Calendar, BarChart, Download
+} from 'lucide-react';
 import '../styles/Dashboard.css';
 
 const SECTOR_ICON = {
-  IT: '💻', Energy: '⚡', Index: '📈', Technology: '🔵',
-  Automotive: '🚗', 'E-Commerce': '🛒',
+  IT: Monitor, Energy: Zap, Index: TrendingUp, Technology: Cpu,
+  Automotive: Car, 'E-Commerce': ShoppingCart,
 };
 
 // Simulate a "today's price" using today's date as seed
@@ -49,7 +54,7 @@ const DashboardPage = () => {
   // Pre-compute prices for watchlist AND all stocks (for marquee)
   const watchlistPrices = useMemo(() =>
     Object.fromEntries(stocks.map((s) => [s.symbol, todayPrice(s.symbol)])),
-    []
+    [stocks]
   );
   const allPrices = useMemo(() =>
     Object.fromEntries(STOCK_LIST.map((s) => [s.symbol, todayPrice(s.symbol)])),
@@ -83,7 +88,7 @@ const DashboardPage = () => {
       </div>
 
       {/* ── Hero: greeting + date ── */}
-      <div className="dash-hero bento-tile bento-large animate-in delay-1">
+      <div className="dash-hero bento-tile animate-in delay-1" style={{ marginBottom: '24px' }}>
         <div className="dash-greeting">
           <div className="dash-avatar">{currentUser.username.charAt(0).toUpperCase()}</div>
           <div>
@@ -100,28 +105,31 @@ const DashboardPage = () => {
           </div>
         </div>
         <div className="dash-hero-actions">
-          <button className="btn-search glow-accent" onClick={() => navigate('/input')}>
-            🔍 Search Other Stocks
+          <button className="btn-secondary" onClick={() => navigate('/input')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Search size={16} /> Search Dashboard
           </button>
-          <button className="btn-ml" onClick={() => navigate('/ml-placeholder')}>
-            🤖 AI Predict <span className="coming-soon">Soon</span>
+          <button className="btn-primary" onClick={() => navigate('/ml-prediction')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <GitMerge size={16} /> AI Predict
           </button>
         </div>
       </div>
 
-      <div className="bento-container animate-in delay-2">
-        {/* ── Watchlist Column (or full width if small) ── */}
-        <section className="dash-section bento-tile bento-large">
-          <h2 className="section-title">⭐ Your Watchlist
-            <span className="section-sub">Today's Prices</span>
-          </h2>
+      <div className="dash-grid animate-in delay-2">
+        {/* ── Watchlist Column (70%) ── */}
+        <section className="dash-section bento-tile dash-main">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Your Watchlist
+              <span className="section-sub">Today's Prices</span>
+            </h2>
+            <button className="btn-primary btn-sm" onClick={() => navigate('/select-stocks')}>Add Stock</button>
+          </div>
           
           {stocks.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">📈</div>
+              <div className="empty-icon"><BarChart2 size={48} /></div>
               <h3>Your watchlist is feeling light.</h3>
               <p>Add some stocks to keep an eye on their market vision.</p>
-              <button className="btn-search glow-accent" onClick={() => navigate('/input')}>
+              <button className="btn-primary" onClick={() => navigate('/select-stocks')} style={{ marginTop: '1rem' }}>
                 + Add your first stock
               </button>
             </div>
@@ -131,14 +139,15 @@ const DashboardPage = () => {
             const p = watchlistPrices[stock.symbol];
             const isProfit = p.changePct >= 0;
             const currency = stock.country === 'IN' && stock.sector !== 'Index' ? '₹' : '$';
+            const IconComp = SECTOR_ICON[stock.sector] || TrendingUp;
             return (
               <button
                 key={stock.symbol}
-                className="stock-card card-hover-shimmer"
+                className="stock-card"
                 onClick={() => goToInput(stock)}
               >
                 <div className="sc-left">
-                  <div className="sc-icon">{SECTOR_ICON[stock.sector] || '📊'}</div>
+                  <div className="sc-icon"><IconComp size={22} /></div>
                   <div className="sc-body">
                     <span className="sc-name">{stock.name}</span>
                     <span className="sc-label">{stock.label}</span>
@@ -148,7 +157,7 @@ const DashboardPage = () => {
                         {isProfit ? '▲' : '▼'} {Math.abs(p.changePct)}%
                       </span>
                     </div>
-                    {stock.mock && <span className="sc-mock">Simulated</span>}
+                    {stock.mock && <span className="sc-mock" style={{ marginTop: '6px', display: 'inline-block' }}>Simulated</span>}
                   </div>
                 </div>
                 
@@ -157,16 +166,15 @@ const DashboardPage = () => {
                     <AreaChart data={generateSparkline(stock.symbol, isProfit, p.price)}>
                       <defs>
                         <linearGradient id={`grad-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={isProfit ? '#2ECC71' : '#e74c3c'} stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor={isProfit ? '#2ECC71' : '#e74c3c'} stopOpacity={0}/>
+                          <stop offset="5%" stopColor={isProfit ? '#22C55E' : '#EF4444'} stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor={isProfit ? '#22C55E' : '#EF4444'} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <Area type="monotone" dataKey="val" stroke={isProfit ? '#2ECC71' : '#e74c3c'} fill={`url(#grad-${stock.symbol})`} strokeWidth={2} isAnimationActive={true} animationDuration={1000} />
+                      <Area type="monotone" dataKey="val" stroke={isProfit ? '#22C55E' : '#EF4444'} fill={`url(#grad-${stock.symbol})`} strokeWidth={2} isAnimationActive={false} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-
-                <div className="sc-arrow">→</div>
+                <div className="sc-arrow"><ArrowRight size={18} /></div>
               </button>
             );
           })}
@@ -174,24 +182,27 @@ const DashboardPage = () => {
           )}
         </section>
 
-        {/* ── Quick Tips ── */}
-        <section className="dash-section bento-tile">
-          <h2 className="section-title">📘 Quick Start</h2>
-          <div className="tips-grid">
+        {/* ── Quick Tips (30%) ── */}
+        <section className="dash-section bento-tile dash-side">
+          <h2 className="section-title">Quick Start</h2>
+          <div className="tips-list">
             {[
-              { icon: '1️⃣', title: 'Select a Stock', desc: 'Click any card or search' },
-              { icon: '2️⃣', title: 'Date Range', desc: 'Pick analysis period' },
-              { icon: '3️⃣', title: 'Analyze', desc: 'View OHLCV & charts' },
-              { icon: '4️⃣', title: 'Export', desc: 'Download PDF or CSV' },
-            ].map((t) => (
-              <div className="tip-card card-hover-shimmer" key={t.icon}>
-                <span className="tip-icon">{t.icon}</span>
-                <div>
-                  <strong>{t.title}</strong>
-                  <p>{t.desc}</p>
+              { icon: ListOrdered, title: 'Select a Stock', desc: 'Click any card or search' },
+              { icon: Calendar, title: 'Date Range', desc: 'Pick analysis period' },
+              { icon: BarChart, title: 'Analyze', desc: 'View OHLCV & charts' },
+              { icon: Download, title: 'Export', desc: 'Download PDF or CSV' },
+            ].map((t, idx) => {
+              const TIcon = t.icon;
+              return (
+                <div className="tip-card" key={idx}>
+                  <div className="tip-icon-wrap"><TIcon size={20} /></div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>{t.title}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t.desc}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>

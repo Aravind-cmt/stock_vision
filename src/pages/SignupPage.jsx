@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { BarChart2 } from 'lucide-react';
 import '../styles/Auth.css';
 
 const SignupPage = () => {
@@ -40,7 +41,7 @@ const SignupPage = () => {
       </div>
       <div className="auth-card animate-in delay-1">
         <div className="auth-header">
-          <span className="auth-logo">📊</span>
+          <span className="auth-logo" style={{ color: 'var(--accent)', display: 'inline-flex' }}><BarChart2 size={32} /></span>
           <h1>Create Account</h1>
           <p>Start your journey with StockVision</p>
         </div>
@@ -48,19 +49,19 @@ const SignupPage = () => {
           {error && <div className="auth-error">{error}</div>}
           <div className="form-group">
             <label>Username</label>
-            <input type="text" name="username" value={form.username} onChange={handleChange} placeholder="Your name" required />
+            <input type="text" name="username" className="dark-input" value={form.username} onChange={handleChange} placeholder="Your name" required />
           </div>
           <div className="form-group">
             <label>Email Address</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required />
+            <input type="email" name="email" className="dark-input" value={form.email} onChange={handleChange} placeholder="you@example.com" required />
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="Min. 6 characters" required />
+            <input type="password" name="password" className="dark-input" value={form.password} onChange={handleChange} placeholder="Min. 6 characters" required />
           </div>
           <div className="form-group">
             <label>Confirm Password</label>
-            <input type="password" name="confirm" value={form.confirm} onChange={handleChange} placeholder="Repeat your password" required />
+            <input type="password" name="confirm" className="dark-input" value={form.confirm} onChange={handleChange} placeholder="Repeat your password" required />
           </div>
           <button className="auth-btn" type="submit" disabled={loading}>
             {loading ? <span className="spinner" /> : 'Create Account'}
