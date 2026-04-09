@@ -87,7 +87,7 @@ const ReportPage = () => {
   };
 
   return (
-    <div className="report-outer">
+    <div className="report-outer bento-container">
 
       {/* Action buttons — hidden during print */}
       <div className="report-actions no-print">
@@ -116,7 +116,7 @@ const ReportPage = () => {
             { label: 'Std Dev',    value: `₹${stats.stdDev}`, icon: '📐', color: '#F59E0B' },
           ].map((s) => (
             <div
-              className="stat-card card-hover-shimmer"
+              className="stat-card bento-tile card-hover-shimmer"
               key={s.label}
               style={{ borderColor: `${s.color}40` }}
             >
@@ -128,7 +128,7 @@ const ReportPage = () => {
         </div>
 
         {/* Price chart */}
-        <div className="chart-section animate-in delay-3">
+        <div className="chart-section bento-tile bento-large animate-in delay-3">
           <h2>Price Over Time (Close)</h2>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -155,7 +155,7 @@ const ReportPage = () => {
         </div>
 
         {/* Gain/loss bar chart */}
-        <div className="chart-section animate-in delay-4">
+        <div className="chart-section bento-tile bento-large animate-in delay-4">
           <h2>Daily Gain / Loss (%)</h2>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -183,7 +183,7 @@ const ReportPage = () => {
         </div>
 
         {/* Statistical interpretation */}
-        <div className="interpretation-section animate-in delay-5">
+        <div className="interpretation-section bento-tile bento-large animate-in delay-5">
           <h2>📊 ML Statistical Analysis</h2>
           <div className="interpretation-card card-hover-shimmer">
             {interpretation.split('\n').map((line, i) => (
@@ -193,7 +193,7 @@ const ReportPage = () => {
         </div>
 
         {/* XGBoost feature summary */}
-        <div className="ml-summary-box animate-in delay-5">
+        <div className="ml-summary-box bento-tile bento-large animate-in delay-5">
           <h2>🌲 XGBoost Model — Feature Highlights</h2>
           <div className="ml-summary-grid">
             {[

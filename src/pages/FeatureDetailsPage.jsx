@@ -185,9 +185,9 @@ const FeatureDetailsPage = () => {
   }));
 
   return (
-    <div className="fd-outer">
+    <div className="fd-outer bento-container">
       {/* Header */}
-      <div className="fd-header">
+      <div className="fd-header bento-tile bento-large">
         <h1>🧬 Feature Engineering Pipeline</h1>
         <p>
           Complete documentation of all <strong>12 engineered features</strong> used in the Nifty 50 XGBoost
@@ -198,7 +198,7 @@ const FeatureDetailsPage = () => {
       </div>
 
       {/* Target box */}
-      <div className="fd-target-box">
+      <div className="fd-target-box bento-tile bento-large">
         <h3>🎯 Prediction Target: range_norm_close (shifted by -1)</h3>
         <p>
           The model predicts <code style={{color:'#a78bfa',fontFamily:'monospace'}}>range_norm_close.shift(-1)</code> —
@@ -211,7 +211,7 @@ const FeatureDetailsPage = () => {
 
       {/* Pipeline overview grid */}
       <div className="fd-section-title">🗺️ All Features at a Glance</div>
-      <div className="fd-pipeline-grid">
+      <div className="fd-pipeline-grid bento-tile bento-large" style={{ padding: '2rem' }}>
         {OVERVIEW.map(f=>(
           <div key={f.name} className="fd-pipeline-chip">
             <span className="fd-chip-icon">{f.icon}</span>
@@ -226,7 +226,7 @@ const FeatureDetailsPage = () => {
 
       {/* Model parameters */}
       <div className="fd-section-title">🔧 XGBoost Model Configuration</div>
-      <div className="fd-model-box">
+      <div className="fd-model-box bento-tile bento-large">
         <div>
           <h3>Hyperparameters</h3>
           <ul className="fd-param-list">
@@ -273,7 +273,7 @@ const FeatureDetailsPage = () => {
           <div className="fd-section-title">{grp.label}</div>
           <div className="fd-cards">
             {grp.features.map(f=>(
-              <div key={f.name} className={`fd-card ${f.category}`}>
+              <div key={f.name} className={`fd-card bento-tile ${f.category}`}>
                 <div className="fd-card-header">
                   <span className="fd-card-icon">{f.icon}</span>
                   <div>
