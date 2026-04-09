@@ -19,7 +19,7 @@ const LandingPage = () => {
     <div className="landing-container">
       <nav className="landing-nav animate-in delay-1">
         <div className="landing-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <BarChart2 size={24} className="text-primary"/> StockVision
+          <BarChart2 size={24} className="text-primary" /> StockVision
         </div>
         <div className="landing-nav-actions">
           <button className="btn-login" onClick={() => navigate('/login')}>Log In</button>
@@ -28,7 +28,7 @@ const LandingPage = () => {
       </nav>
 
       <main className="landing-hero animate-in delay-2">
-        <div className="hero-pill">POWERED BY XGBOOST</div>
+
         <h1>
           Navigate the Markets with <span className="hero-accent">Precision</span>
         </h1>
@@ -52,7 +52,7 @@ const LandingPage = () => {
           <p>Everything you need to analyze and forecast market movements.</p>
         </div>
         <div className="features-grid">
-          
+
           <div className="feature-card bento-tile">
             <div className="feature-icon" style={{ color: 'var(--accent)' }}><TrendingUp size={32} /></div>
             <h3>Dynamic Visualizations</h3>
@@ -75,7 +75,7 @@ const LandingPage = () => {
             <div className="feature-icon" style={{ color: 'var(--accent)' }}><Smartphone size={32} /></div>
             <h3>FinTech Dashboard</h3>
             <p>
-              Assemble a lightning-fast bento-layout dashboard of your favorite stocks and 
+              Assemble a lightning-fast bento-layout dashboard of your favorite stocks and
               indices across global and Indian markets.
             </p>
           </div>
