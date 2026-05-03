@@ -1,0 +1,6 @@
+model.pkl
+scaler.pkl
+__pycache__/
+venv/
+dist/
+*.pyc
