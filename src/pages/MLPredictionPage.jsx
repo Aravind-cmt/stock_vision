@@ -420,8 +420,25 @@ const MLPredictionPage = () => {
     const pred    = makePrediction(trees, base, liveX, liveSpike, liveClose, liveDate, liveBaseMin, liveRangeDiff);
     const splitAt = Math.floor(rows.length * 0.8);
     const metrics = computeMetrics(rows, trees, base, splitAt);
-
-    setResults({ ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt, dateRange: `${rows[0].date} → ${liveDate}`, calendarToday: todayStr });
+      setResults({ ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt, dateRange: `${rows[0].date} → ${liveDate}`, calendarToday: todayStr });
+      // If backend API is configured, ask it for authoritative next trading date
+      const apiBase = process.env.REACT_APP_API_BASE;
+      if (apiBase) {
+        (async () => {
+          try {
+            const url = `${apiBase.replace(/\/$/, '')}/predict`;
+            const body = { feature_list: liveX, features: { today_close: liveClose } };
+            const r = await axios.post(url, body, { timeout: 8000 });
+            if (r?.data?.next_date) {
+              setResults(prev => ({ ...prev, nextDate: r.data.next_date }));
+              setStatus({ type: 'success', msg: `Next trading day (from API): ${r.data.next_date}` });
+            }
+          } catch (e) {
+            // ignore API errors — keep client-side prediction
+            console.warn('Backend predict failed', e?.message || e);
+          }
+        })();
+      }
     const isStale = liveDate < expectedLatestTradingDate;
     const age = isStale
       ? `[Stale] Last market data is ${liveDate} (today: ${todayStr}) — click "Add Today's Data" to check for newer candles.`
