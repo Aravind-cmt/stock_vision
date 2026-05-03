@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 from server.model import ModelService
-from server.preprocessing import preprocess_input
+from server.preprocessing import preprocess_input, preprocess_from_df
+import pandas as pd
 
 app = FastAPI(title="Stock Prediction API", version="1.0")
 
@@ -48,3 +49,24 @@ def predict(req: FeaturesRequest):
         return PredictionResponse(next_price=next_price, diff=diff, diff_pct=diff_pct, meta={"model": ModelService.info()})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/upload-csv")
+async def upload_csv(file: UploadFile = File(...), predict: bool = False):
+    """Accept a CSV of OHLCV rows, run preprocessing, and optionally return prediction.
+
+    - `predict` (query param): if true, run model.predict on the generated vector.
+    """
+    try:
+        content = await file.read()
+        # read into pandas
+        df = pd.read_csv(pd.io.common.BytesIO(content))
+        vec = preprocess_from_df(df)
+        result = {"features": vec}
+        if predict:
+            model = ModelService.get()
+            y = model.predict([vec])[0]
+            result['prediction'] = float(y)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
