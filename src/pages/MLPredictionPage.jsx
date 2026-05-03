@@ -46,6 +46,13 @@ function getExpectedLatestTradingDate(todayStr = getTodayInIST()) {
   return d.toISOString().slice(0, 10);
 }
 
+function getNextTradingDate(fromDateStr) {
+  const d = new Date(`${fromDateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // ─── YAHOO FINANCE FETCH ─────────────────────────────────────────────────────
 async function fetchYFinance(symbol, startYear = 2000, sinceDate = null) {
   const period1 = sinceDate
@@ -291,11 +298,7 @@ function makePrediction(trees, base, liveX, liveSpike, liveClose, liveDate, live
   const diff      = +(nextPrice - liveClose).toFixed(2);
   const diffPct   = +((diff / liveClose) * 100).toFixed(2);
 
-  const d = new Date(liveDate + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() + 1);
-  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1);
-
-  return { nextPrice, diff, diffPct, nextDate: d.toISOString().slice(0, 10),
+  return { nextPrice, diff, diffPct, nextDate: getNextTradingDate(liveDate),
            todayClose: liveClose, todayDate: liveDate };
 }
 
@@ -418,7 +421,7 @@ const MLPredictionPage = () => {
     const splitAt = Math.floor(rows.length * 0.8);
     const metrics = computeMetrics(rows, trees, base, splitAt);
 
-    setResults({ ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt, dateRange: `${rows[0].date} → ${liveDate}` });
+    setResults({ ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt, dateRange: `${rows[0].date} → ${liveDate}`, calendarToday: todayStr });
     const isStale = liveDate < expectedLatestTradingDate;
     const age = isStale
       ? `[Stale] Last market data is ${liveDate} (today: ${todayStr}) — click "Add Today's Data" to check for newer candles.`
@@ -669,7 +672,10 @@ const MLPredictionPage = () => {
                 &nbsp;({results.diffPct > 0 ? '+' : ''}{results.diffPct}%)
               </div>
               <div className="ndh-today">
-                Today ({results.todayDate}): ₹{results.todayClose.toFixed(2)}
+                Last Market Close ({results.todayDate}): ₹{results.todayClose.toFixed(2)}
+              </div>
+              <div className="ndh-today">
+                Calendar Today: {results.calendarToday}
               </div>
             </div>
             <div className="ndh-stats">
