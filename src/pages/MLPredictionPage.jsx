@@ -298,7 +298,10 @@ function makePrediction(trees, base, liveX, liveSpike, liveClose, liveDate, live
   const diff      = +(nextPrice - liveClose).toFixed(2);
   const diffPct   = +((diff / liveClose) * 100).toFixed(2);
 
-  return { nextPrice, diff, diffPct, nextDate: getNextTradingDate(liveDate),
+  // Prefer next trading day relative to calendar "today" (IST) so the UI
+  // shows the next market session even on weekends/timezone edges.
+  const todayStrLocal = getTodayInIST();
+  return { nextPrice, diff, diffPct, nextDate: getNextTradingDate(todayStrLocal),
            todayClose: liveClose, todayDate: liveDate };
 }
 
