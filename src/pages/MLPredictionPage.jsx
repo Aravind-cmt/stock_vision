@@ -30,7 +30,21 @@ const CORS_PROXIES = [
 ];
 
 const CACHE_KEY = sym => `mlp_v5_${sym}`;
-const TODAY = new Date().toISOString().slice(0, 10);
+
+function getTodayInIST() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
+function getExpectedLatestTradingDate(todayStr = getTodayInIST()) {
+  const d = new Date(`${todayStr}T00:00:00Z`);
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
 
 // ─── YAHOO FINANCE FETCH ─────────────────────────────────────────────────────
 async function fetchYFinance(symbol, startYear = 2000, sinceDate = null) {
@@ -360,6 +374,9 @@ const MLPredictionPage = () => {
   const [loading,    setLoading]    = useState(false);
   const [cacheInfo,  setCacheInfo]  = useState(null); // { lastDate, totalRows, trainedAt }
 
+  const todayStr = getTodayInIST();
+  const expectedLatestTradingDate = getExpectedLatestTradingDate(todayStr);
+
   // ── Load from cache on mount / symbol change ────────────────────────────
   useEffect(() => {
     const cached = loadCache(symbol);
@@ -402,8 +419,11 @@ const MLPredictionPage = () => {
     const metrics = computeMetrics(rows, trees, base, splitAt);
 
     setResults({ ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt, dateRange: `${rows[0].date} → ${liveDate}` });
-    const age = liveDate < TODAY ? `[Stale] Data is from ${liveDate} — click "Add Today's Data" to update.` : `[Valid] Last data: ${liveDate} · Trained: ${trainedAt}`;
-    setStatus({ type: liveDate < TODAY ? 'info' : 'success', msg: age });
+    const isStale = liveDate < expectedLatestTradingDate;
+    const age = isStale
+      ? `[Stale] Last market data is ${liveDate} (today: ${todayStr}) — click "Add Today's Data" to check for newer candles.`
+      : `[Valid] Last market data: ${liveDate} (today: ${todayStr}) · Trained: ${trainedAt}`;
+    setStatus({ type: isStale ? 'info' : 'success', msg: age });
     setCacheInfo({ lastDate: liveDate, totalRows, trainedAt });
   }
 
@@ -550,12 +570,12 @@ const MLPredictionPage = () => {
   // ── Auto-run daily update on load if cache is stale ──────────────────────
   useEffect(() => {
     const cached = loadCache(symbol);
-    if (cached && cached.liveDate < TODAY) {
+    if (cached && cached.liveDate < expectedLatestTradingDate) {
       // Cache exists but date is old — auto-update in background
       setTimeout(() => dailyUpdate(), 500);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbol]);
+  }, [symbol, expectedLatestTradingDate]);
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
@@ -605,8 +625,8 @@ const MLPredictionPage = () => {
           <span>Last data: <strong>{cacheInfo.lastDate}</strong></span>
           <span>·</span>
           <span>Trained: <strong>{cacheInfo.trainedAt}</strong></span>
-          <span className={cacheInfo.lastDate < TODAY ? 'cache-stale' : 'cache-fresh'}>
-            {cacheInfo.lastDate < TODAY ? '⚠️ Stale (auto-updating…)' : '✅ Up to date'}
+          <span className={cacheInfo.lastDate < expectedLatestTradingDate ? 'cache-stale' : 'cache-fresh'}>
+            {cacheInfo.lastDate < expectedLatestTradingDate ? '⚠️ Stale (auto-updating…)': '✅ Up to date'}
           </span>
         </div>
       )}
