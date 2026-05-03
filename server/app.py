@@ -4,6 +4,30 @@ from typing import Dict, List, Optional
 from server.model import ModelService
 from server.preprocessing import preprocess_input, preprocess_from_df
 import pandas as pd
+from datetime import date, timedelta, datetime
+try:
+    from zoneinfo import ZoneInfo
+except Exception:
+    ZoneInfo = None
+
+
+def _today_ist_date() -> date:
+    # Return current date in India timezone; fallback to UTC date if ZoneInfo unavailable
+    if ZoneInfo is not None:
+        return datetime.now(ZoneInfo('Asia/Kolkata')).date()
+    return datetime.utcnow().date()
+
+
+def next_trading_date_from(d: date) -> str:
+    # advance to next calendar day then skip weekends (Sat/Sun)
+    nd = d + timedelta(days=1)
+    while nd.weekday() >= 5:  # 5=Sat,6=Sun
+        nd += timedelta(days=1)
+    return nd.isoformat()
+
+
+def next_trading_date_today() -> str:
+    return next_trading_date_from(_today_ist_date())
 
 app = FastAPI(title="Stock Prediction API", version="1.0")
 
@@ -46,7 +70,7 @@ def predict(req: FeaturesRequest):
         diff = float(next_price - now_price) if now_price is not None else 0.0
         diff_pct = float((diff / now_price) * 100) if now_price not in (None, 0) else 0.0
 
-        return PredictionResponse(next_price=next_price, diff=diff, diff_pct=diff_pct, meta={"model": ModelService.info()})
+        return PredictionResponse(next_price=next_price, diff=diff, diff_pct=diff_pct, next_date=next_trading_date_today(), meta={"model": ModelService.info()})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -67,6 +91,7 @@ async def upload_csv(file: UploadFile = File(...), predict: bool = False):
             model = ModelService.get()
             y = model.predict([vec])[0]
             result['prediction'] = float(y)
+            result['next_date'] = next_trading_date_today()
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
