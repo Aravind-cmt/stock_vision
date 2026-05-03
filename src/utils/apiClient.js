@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'https://your-backend.example.com';
+// Prefer Vite env var, then CRA-style env, then fall back to localhost for dev
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE)
+  || process.env.REACT_APP_API_BASE
+  || 'http://127.0.0.1:8000';
 
 export async function predict(features) {
   const url = `${API_BASE}/predict`;
