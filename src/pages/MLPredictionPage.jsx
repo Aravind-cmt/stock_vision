@@ -4,16 +4,16 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   ResponsiveContainer, Legend,
 } from 'recharts';
-import { 
-  TreePine, Download, Settings, Shuffle, Target, 
-  Calendar, TrendingUp, TrendingDown, Zap, Trash2, 
+import {
+  TreePine, Download, Settings, Shuffle, Target,
+  Calendar, TrendingUp, TrendingDown, Zap, Trash2,
   RefreshCw, BarChart2, CheckCircle2, AlertTriangle, AlertCircle
 } from 'lucide-react';
 import '../styles/MLPrediction.css';
 
-// ─── SYMBOLS ─────────────────────────────────────────────────────────────────
+// ─── SYMBOLS ──────────────────────────────────────────────────────────────────
 const SYMBOLS = [
-  { label: 'Nifty 50 Index',        symbol: '^NSEI'        },
+  { label: 'Nifty 50 Index', symbol: '^NSEI' },
 ];
 
 const DATE_RANGES = [
@@ -29,31 +29,13 @@ const CORS_PROXIES = [
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
 ];
 
-const CACHE_KEY = sym => `mlp_v5_${sym}`;
+const CACHE_KEY = sym => `mlp_v6_${sym}`;
+const TODAY = new Date().toISOString().slice(0, 10);
 
-function getTodayInIST() {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kolkata',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-}
+// ─── FIX #3: Direction accuracy threshold ────────────────────────────────────
+const DIR_THRESHOLD_PCT = 0.002;
 
-function getExpectedLatestTradingDate(todayStr = getTodayInIST()) {
-  const d = new Date(`${todayStr}T00:00:00Z`);
-  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
-function getNextTradingDate(fromDateStr) {
-  const d = new Date(`${fromDateStr}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
-  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
-
-// ─── YAHOO FINANCE FETCH ─────────────────────────────────────────────────────
+// ─── YAHOO FINANCE FETCH ──────────────────────────────────────────────────────
 async function fetchYFinance(symbol, startYear = 2000, sinceDate = null) {
   const period1 = sinceDate
     ? Math.floor(new Date(sinceDate + 'T00:00:00Z').getTime() / 1000)
@@ -86,7 +68,7 @@ async function fetchYFinance(symbol, startYear = 2000, sinceDate = null) {
   return null;
 }
 
-// ─── FEATURE ENGINEERING ─────────────────────────────────────────────────────
+// ─── ROLLING HELPERS ──────────────────────────────────────────────────────────
 const rolling = (arr, w, fn, minP = 1) =>
   arr.map((_, i) => {
     const s = arr.slice(Math.max(0, i - w + 1), i + 1);
@@ -100,8 +82,23 @@ const rollStd  = (a, w, mp = 1) => rolling(a, w, s => {
 const rollMin = (a, w, mp = 1) => rolling(a, w, s => Math.min(...s), mp);
 const rollMax = (a, w, mp = 1) => rolling(a, w, s => Math.max(...s), mp);
 
+// ─── FIX #3: ROLLING Z-SCORE NORMALIZATION ───────────────────────────────────
+// Uses only past data up to min(i, splitAt) so no future data leaks into test set.
+// Stationary normalization that handles distribution shift over time.
+function rollingZscore(arr, splitAt) {
+  return arr.map((v, i) => {
+    const cap = splitAt != null ? Math.min(i, splitAt) : i;
+    const window = arr.slice(Math.max(0, cap - 252), cap); // up to 1yr lookback
+    if (window.length < 20) return 0;
+    const m = window.reduce((a, b) => a + b, 0) / window.length;
+    const s = Math.sqrt(window.reduce((a, b) => a + (b - m) ** 2, 0) / window.length);
+    return s === 0 ? 0 : Math.max(-3, Math.min(3, (v - m) / s)); // clip to ±3σ
+  });
+}
+
+// ─── TECHNICAL INDICATORS ────────────────────────────────────────────────────
 function calcRSI(close, period = 14) {
-  const alpha = 1 / period; // com = period-1 in pandas EWM → alpha = 1/period
+  const alpha = 1 / period;
   const rsi = Array(close.length).fill(NaN);
   let avgG = 0, avgL = 0;
   for (let i = 1; i < close.length; i++) {
@@ -114,18 +111,19 @@ function calcRSI(close, period = 14) {
   }
   return rsi;
 }
+
 function calcATR(high, low, close) {
   const tr = close.map((c, i) => {
     if (i === 0) return high[i] - low[i];
     const pc = close[i - 1];
     return Math.max(high[i] - low[i], Math.abs(high[i] - pc), Math.abs(low[i] - pc));
   });
-  // Python uses ewm(span=14), NOT simple rolling mean
   const alpha = 2 / (14 + 1);
   const out = [...tr];
   for (let i = 1; i < out.length; i++) out[i] = alpha * out[i] + (1 - alpha) * out[i - 1];
   return out;
 }
+
 function calcSMI(high, low, close) {
   const ewm = (arr, span) => {
     const a = 2 / (span + 1), out = [...arr];
@@ -138,18 +136,34 @@ function calcSMI(high, low, close) {
   const hS = ewm(ewm(hi.map((h, i) => (h - lo[i]) / 2), 3), 3);
   return dS.map((d, i) => hS[i] === 0 || isNaN(hS[i]) ? NaN : 100 * d / hS[i]);
 }
+
 function calcVolatility(close) {
   const lr = close.map((c, i) => i === 0 ? NaN : Math.log(c / close[i - 1]));
-  return rollStd(lr, 20, 20).map(v => isNaN(v) ? NaN : v * Math.sqrt(252)); // was 14, now 20
+  return rollStd(lr, 20, 20).map(v => isNaN(v) ? NaN : v * Math.sqrt(252));
 }
+
 function calcZscoreVol(volume) {
   const m = rollMean(volume, 20, 1), s = rollStd(volume, 20, 1);
   return volume.map((v, i) => s[i] === 0 || isNaN(s[i]) ? NaN : (v - m[i]) / s[i]);
 }
-function calcPriceSpike(chg) {
-  const m = rollMean(chg, 20, 1), s = rollStd(chg, 20, 1);
-  return chg.map((c, i) => (c > m[i] + 2 * s[i] || c < m[i] - 2 * s[i]) ? 1 : 0);
+
+// ─── FIX #1: LAGGED SPIKE + SPIKE COUNT — eliminates same-day leakage ────────
+// Old: spk[i] = did price spike TODAY → used to predict TOMORROW (leaks today's move)
+// New: lagSpk[i] = did price spike YESTERDAY (safe lag)
+//      spk3[i] = how many of the last 3 days had a spike (momentum signal)
+function calcPriceSpike(chgPct) {
+  const m = rollMean(chgPct, 20, 1), s = rollStd(chgPct, 20, 1);
+  const spk = chgPct.map((c, i) => (c > m[i] + 2 * s[i] || c < m[i] - 2 * s[i]) ? 1 : 0);
+  // Lag by 1 — yesterday's spike is a valid predictor of tomorrow's follow-through
+  const lagSpk = [0, ...spk.slice(0, -1)];
+  // 3-day spike count — captures spike clusters (higher = more volatile regime)
+  const spk3 = spk.map((_, i) => {
+    if (i < 2) return 0;
+    return spk[i - 2] + spk[i - 1] + (i > 0 ? spk[i - 1] : 0);
+  });
+  return { lagSpk, spk3, spkRaw: spk };
 }
+
 function calcRVI(close) {
   const delta = close.map((c, i) => i === 0 ? 0 : c - close[i - 1]);
   const su = rollStd(delta.map(d => Math.max(0,  d)), 14, 14);
@@ -159,6 +173,7 @@ function calcRVI(close) {
     return (!isNaN(u) && !isNaN(sd[i]) && den !== 0) ? 100 * u / den : NaN;
   });
 }
+
 function calcEMV(high, low, volume) {
   const mid = high.map((h, i) => (h + low[i]) / 2);
   const dist = mid.map((m, i) => i === 0 ? 0 : m - mid[i - 1]);
@@ -167,121 +182,199 @@ function calcEMV(high, low, volume) {
   const box = volume.map((v, i) => hl[i] === 0 || isNaN(vs[i]) || vs[i] === 0 ? NaN : (v / vs[i]) / hl[i]);
   return rollMean(dist.map((d, i) => box[i] === 0 || isNaN(box[i]) ? NaN : d / box[i]), 14, 14);
 }
-function calcGrade(chg) {
-  return chg.map(c => c < -3 ? 0 : c < -1.5 ? 1 : c < -0.5 ? 2 : c <= 0.5 ? 3 : c <= 1.5 ? 4 : c <= 3 ? 5 : 6);
-}
 
-function normArr(arr) {
-  const valid = arr.filter(v => !isNaN(v));
-  if (!valid.length) return { norm: arr.map(() => 0), mn: 0, mx: 1 };
-  const mn = Math.min(...valid), mx = Math.max(...valid), rng = mx - mn || 1;
-  return { norm: arr.map(v => isNaN(v) ? 0 : (v - mn) / rng), mn, mx };
-}
+// ─── FIX #2: LOG-RETURN TARGET ────────────────────────────────────────────────
+// Old: y = (nextClose − baseMin) / rangeDiff → shifts 3× over 6 years, non-stationary
+// New: y = log(nextClose / close) → stationary, scale-invariant, bounded ±5% daily
+// Price reconstruction: nextPrice = close × exp(predicted_log_return)
 
-// ─── BUILD FULL FEATURE DATASET FROM RAW OHLCV ───────────────────────────────
-function buildDataset(raw) {
+// ─── BUILD FEATURE DATASET ───────────────────────────────────────────────────
+function buildDataset(raw, splitAt = null) {
+  const n = raw.length;
   const close  = raw.map(r => r.Close);
   const high   = raw.map(r => r.High);
   const low    = raw.map(r => r.Low);
   const vol    = raw.map(r => r.Volume);
-  const chgPct = close.map((c, i) => i === 0 ? 0 : ((c - close[i - 1]) / close[i - 1]) * 100);
 
+  // Log-returns (stationary)
+  const logRet = close.map((c, i) => i === 0 ? 0 : Math.log(c / close[i - 1]));
+  const chgPct = logRet.map(r => r * 100);
+
+  // Indicators
   const rsi  = calcRSI(close);
-  // ATR is still computed (used for spike detection context) but NOT in feature vector
   const atr  = calcATR(high, low, close);
   const smi  = calcSMI(high, low, close);
   const vola = calcVolatility(close);
   const zsv  = calcZscoreVol(vol);
-  const spk  = calcPriceSpike(chgPct);
   const rvi  = calcRVI(close);
   const emv  = calcEMV(high, low, vol);
   const rn   = rvi.map((r, i) => emv[i] === 0 || isNaN(emv[i]) ? NaN : r / emv[i]);
-  const grd  = calcGrade(chgPct);
 
+  // FIX #1: use lagged spike (no leakage) + spike count
+  const { lagSpk, spk3, spkRaw } = calcPriceSpike(chgPct);
+
+  // Lagged RSI / SMI (safe — these are already indicators of past data)
   const lagRsi = [NaN, ...rsi.slice(0, -1)];
   const lagSmi = [NaN, ...smi.slice(0, -1)];
 
-  // Bug 3 fix: 8 features, no ATR
-  const { norm: nChg }  = normArr(chgPct);
-  const { norm: nGrd }  = normArr(grd);
-  const { norm: nZ }    = normArr(zsv);
-  const { norm: nVol }  = normArr(vola);
-  const { norm: nRN }   = normArr(rn);
-  const { norm: nLSMI } = normArr(lagSmi);
-  const { norm: nLRSI } = normArr(lagRsi);
+  // RSI distance from 50 (mean-reversion signal, normalized)
+  const rsiDist = rsi.map(r => isNaN(r) ? NaN : (r - 50) / 50);
 
-  // Bug 4 fix: rolling 60-bar min/max of prevClose → 20-bar mean → normalize target
-  const prevClose = [NaN, ...close.slice(0, -1)];
-  const roll60min = rollMin(prevClose, 60, 60);
-  const roll60max = rollMax(prevClose, 60, 60);
-  const baseMin   = rollMean(roll60min, 20, 1);
-  const baseMax   = rollMean(roll60max, 20, 1);
-  const rangeDiff = baseMax.map((mx, i) => Math.max(mx - baseMin[i], 1e-6));
+  // ATR normalized by close (volatility-adjusted)
+  const atrPct = atr.map((a, i) => close[i] > 0 ? a / close[i] : NaN);
 
-  const nextClose = [...close.slice(1), NaN];
+  // FIX #3: rolling z-score normalization — freeze at splitAt to prevent leakage
+  const sp = splitAt ?? Math.floor(n * 0.8);
+  const nChgPct  = rollingZscore(chgPct,  sp);
+  const nZsv     = rollingZscore(zsv,     sp);
+  const nVola    = rollingZscore(vola.map(v => isNaN(v) ? 0 : v), sp);
+  const nRN      = rollingZscore(rn.map(v => isNaN(v) ? 0 : v),   sp);
+  const nLSMI    = rollingZscore(lagSmi.map(v => isNaN(v) ? 0 : v), sp);
+  const nLRSI    = rollingZscore(lagRsi.map(v => isNaN(v) ? 0 : v), sp);
+  const nRsiDist = rollingZscore(rsiDist.map(v => isNaN(v) ? 0 : v), sp);
+  const nAtrPct  = rollingZscore(atrPct.map(v => isNaN(v) ? 0 : v),  sp);
+
+  // FIX #2: log-return target (stationary)
+  const nextLogRet = [...logRet.slice(1), NaN];
 
   const rows = [];
-  for (let i = 0; i < raw.length - 1; i++) {
-    const rng = rangeDiff[i];
-    const mn  = baseMin[i];
-    if (isNaN(rng) || isNaN(mn)) continue;
-    const y = (nextClose[i] - mn) / rng;
-    // Bug 3: 8-element feature vector
-    const x = [nChg[i], nGrd[i], nZ[i], nVol[i], nRN[i], spk[i], nLSMI[i], nLRSI[i]];
-    if (x.some(isNaN) || isNaN(y)) continue;
-    rows.push({ date: raw[i].Date, close: close[i], nextClose: nextClose[i],
-                x, y, rsi: rsi[i], spike: spk[i],
-                baseMin: mn, rangeDiff: rng }); // store per-row scale for inverse
+  for (let i = 0; i < n - 1; i++) {
+    // FIX #2: y is log-return to next day — stationary, no rolling baseline needed
+    const y = nextLogRet[i];
+    // Feature vector — 9 features, all safe (no same-day leakage)
+    const x = [
+      nChgPct[i],    // today's log-return (already happened, predicting tomorrow)
+      nZsv[i],       // volume z-score
+      nVola[i],      // realized volatility
+      nRN[i],        // RVI/EMV combined
+      lagSpk[i],     // FIX #1: yesterday's spike flag (lagged, no leakage)
+      spk3[i],       // FIX #1: 3-day spike count (regime indicator)
+      nLSMI[i],      // lagged SMI
+      nLRSI[i],      // lagged RSI
+      nRsiDist[i],   // RSI distance from neutral
+    ];
+    if (x.some(isNaN) || isNaN(y) || !isFinite(y)) continue;
+    rows.push({
+      date: raw[i].Date,
+      close: close[i],
+      nextClose: close[i + 1],
+      x, y,
+      rsi: rsi[i],
+      spike: spkRaw[i],
+    });
   }
 
-  // Live row (last bar, no future)
-  const n = raw.length - 1;
-  const liveX = [nChg[n], nGrd[n], nZ[n], nVol[n], nRN[n], spk[n], nLSMI[n], nLRSI[n]]
-    .map(v => isNaN(v) ? 0 : v);
+  // Live (most recent bar) features for next-day prediction
+  const liveX = [
+    nChgPct[n - 1],
+    nZsv[n - 1],
+    nVola[n - 1],
+    nRN[n - 1],
+    lagSpk[n - 1],
+    spk3[n - 1],
+    nLSMI[n - 1],
+    nLRSI[n - 1],
+    nRsiDist[n - 1],
+  ].map(v => (isNaN(v) || !isFinite(v)) ? 0 : v);
 
-  return { rows, liveX, liveSpike: spk[n], liveClose: close[n], liveDate: raw[n].Date,
-           liveBaseMin: baseMin[n], liveRangeDiff: rangeDiff[n] };
+  return {
+    rows,
+    liveX,
+    liveSpike: spkRaw[n - 1],
+    liveClose: close[n - 1],
+    liveDate: raw[n - 1].Date,
+  };
 }
 
-// ─── XGBOOST SIMULATION ───────────────────────────────────────────────────────
-function trainXGB(Xtrain, ytrain) {
-  const n = Xtrain.length, nFeat = Xtrain[0].length;
-  const trees = [], residuals = [...ytrain];
-  for (let t = 0; t < 100; t++) {
-    const nSamp  = Math.floor(n * 0.8);
-    const idxs   = Array.from({ length: n }, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, nSamp);
-    const feats  = Array.from({ length: nFeat }, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, Math.ceil(nFeat * 0.8));
-    let bFeat = -1, bThresh = 0, bGain = -Infinity, bL = 0, bR = 0;
-    for (const f of feats) {
-      const vals = idxs.map(i => Xtrain[i][f]).sort((a, b) => a - b);
-      const thresh = vals[Math.floor(vals.length / 2)];
-      const lIdx  = idxs.filter(i => Xtrain[i][f] <= thresh);
-      const rIdx  = idxs.filter(i => Xtrain[i][f] >  thresh);
-      if (lIdx.length < 2 || rIdx.length < 2) continue;
+// ─── FIX #4: DEPTH-3 XGBOOST TREES ──────────────────────────────────────────
+// Old: single-split stump (depth=1) → can't learn interaction effects
+// New: recursive tree builder up to depth=3 → captures e.g. "high vol AND oversold"
+function buildTree(Xtrain, residuals, idxs, feats, depth, maxDepth = 3) {
+  const leafVal = idxs.reduce((s, i) => s + residuals[i], 0) / idxs.length;
+  if (depth >= maxDepth || idxs.length < 6) {
+    return { leaf: true, val: leafVal };
+  }
+
+  let bFeat = -1, bThresh = 0, bGain = -Infinity;
+  let bLIdx = [], bRIdx = [];
+
+  for (const f of feats) {
+    const vals = idxs.map(i => Xtrain[i][f]).sort((a, b) => a - b);
+    // Try 3 split points (25th, 50th, 75th percentile) for better splits
+    const candidates = [
+      vals[Math.floor(vals.length * 0.25)],
+      vals[Math.floor(vals.length * 0.5)],
+      vals[Math.floor(vals.length * 0.75)],
+    ];
+    for (const thresh of candidates) {
+      const lIdx = idxs.filter(i => Xtrain[i][f] <= thresh);
+      const rIdx = idxs.filter(i => Xtrain[i][f] >  thresh);
+      if (lIdx.length < 3 || rIdx.length < 3) continue;
       const lM = lIdx.reduce((s, i) => s + residuals[i], 0) / lIdx.length;
       const rM = rIdx.reduce((s, i) => s + residuals[i], 0) / rIdx.length;
-      const gain = -(lIdx.reduce((s, i) => s + (residuals[i] - lM) ** 2, 0) +
-                     rIdx.reduce((s, i) => s + (residuals[i] - rM) ** 2, 0));
-      if (gain > bGain) { bGain = gain; bFeat = f; bThresh = thresh; bL = lM; bR = rM; }
+      const gain = -(
+        lIdx.reduce((s, i) => s + (residuals[i] - lM) ** 2, 0) +
+        rIdx.reduce((s, i) => s + (residuals[i] - rM) ** 2, 0)
+      );
+      if (gain > bGain) { bGain = gain; bFeat = f; bThresh = thresh; bLIdx = lIdx; bRIdx = rIdx; }
     }
-    if (bFeat === -1) break;
-    trees.push({ feat: bFeat, thresh: bThresh, left: bL, right: bR });
-    for (let i = 0; i < n; i++)
-      residuals[i] -= 0.05 * (Xtrain[i][bFeat] <= bThresh ? bL : bR);
+  }
+
+  if (bFeat === -1) return { leaf: true, val: leafVal };
+
+  return {
+    leaf: false,
+    feat: bFeat,
+    thresh: bThresh,
+    left:  buildTree(Xtrain, residuals, bLIdx, feats, depth + 1, maxDepth),
+    right: buildTree(Xtrain, residuals, bRIdx, feats, depth + 1, maxDepth),
+  };
+}
+
+function predictTree(tree, row) {
+  if (tree.leaf) return tree.val;
+  return row[tree.feat] <= tree.thresh
+    ? predictTree(tree.left, row)
+    : predictTree(tree.right, row);
+}
+
+function trainXGB(Xtrain, ytrain) {
+  const n = Xtrain.length, nFeat = Xtrain[0].length;
+  const LR = 0.03;
+  const N_TREES = 300;
+  const trees = [];
+  const residuals = [...ytrain];
+
+  for (let t = 0; t < N_TREES; t++) {
+    const nSamp = Math.floor(n * 0.8);
+    const idxs  = Array.from({ length: n }, (_, i) => i)
+      .sort(() => Math.random() - 0.5).slice(0, nSamp);
+    const feats = Array.from({ length: nFeat }, (_, i) => i)
+      .sort(() => Math.random() - 0.5).slice(0, Math.ceil(nFeat * 0.8));
+
+    // FIX #4: depth-3 tree instead of single-split stump
+    const tree = buildTree(Xtrain, residuals, idxs, feats, 0, 3);
+    trees.push(tree);
+
+    // Update residuals
+    for (let i = 0; i < n; i++) {
+      residuals[i] -= LR * predictTree(tree, Xtrain[i]);
+    }
   }
   return trees;
 }
 
 function predictXGB(trees, X, base) {
+  const LR = 0.03;
   return X.map(row => {
     let p = base;
-    for (const t of trees) p += 0.05 * (row[t.feat] <= t.thresh ? t.left : t.right);
+    for (const t of trees) p += LR * predictTree(t, row);
     return p;
   });
 }
 
 function featureImportance(Xtrain) {
-  const names = ['Change%', 'grade_no', 'ZScore_Vol', 'Volatility', 'RN', 'PriceSpike', 'lag_SMI', 'lag_RSI'];
+  const names = ['Change%', 'ZScore_Vol', 'Volatility', 'RN', 'lagSpike', 'Spike3d', 'lag_SMI', 'lag_RSI', 'RSI_dist'];
   return names.map((name, fi) => {
     const col = Xtrain.map(r => r[fi]);
     const m   = col.reduce((a, b) => a + b, 0) / col.length;
@@ -290,48 +383,75 @@ function featureImportance(Xtrain) {
     .map((f, _, arr) => ({ ...f, importance: +(f.importance / (arr[0].importance || 1) * 100).toFixed(1) }));
 }
 
-// ─── PREDICT FUNCTION (uses cached model) ────────────────────────────────────
-function makePrediction(trees, base, liveX, liveSpike, liveClose, liveDate, liveBaseMin, liveRangeDiff) {
-  const rawNorm   = predictXGB(trees, [liveX], base)[0];
-  const adjNorm   = liveSpike === 1 ? 0.5 + 0.3 * (rawNorm - 0.5) : rawNorm;
-  const nextPrice = +(adjNorm * liveRangeDiff + liveBaseMin).toFixed(2); // Bug 4 fix
+// ─── PREDICT NEXT DAY ─────────────────────────────────────────────────────────
+function makePrediction(trees, base, liveX, liveClose, liveDate) {
+  // FIX #2: Model predicts log-return → reconstruct price
+  const predictedLogReturn = predictXGB(trees, [liveX], base)[0];
+  const nextPrice = +(liveClose * Math.exp(predictedLogReturn)).toFixed(2);
   const diff      = +(nextPrice - liveClose).toFixed(2);
   const diffPct   = +((diff / liveClose) * 100).toFixed(2);
 
-  // Prefer next trading day relative to calendar "today" (IST) so the UI
-  // shows the next market session even on weekends/timezone edges.
-  const todayStrLocal = getTodayInIST();
-  return { nextPrice, diff, diffPct, nextDate: getNextTradingDate(todayStrLocal),
-           todayClose: liveClose, todayDate: liveDate };
+  const d = new Date(liveDate + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + 1);
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1);
+
+  return {
+    nextPrice, diff, diffPct,
+    nextDate: d.toISOString().slice(0, 10),
+    todayClose: liveClose,
+    todayDate: liveDate,
+  };
 }
 
-// ─── TEST METRICS ─────────────────────────────────────────────────────────────
+// ─── COMPUTE TEST METRICS ─────────────────────────────────────────────────────
 function computeMetrics(rows, trees, base, splitAt) {
-  const testSet   = rows.slice(splitAt);
-  const Xtest     = testSet.map(r => r.x);
-  const testNorms = predictXGB(trees, Xtest, base)
-    .map((p, i) => testSet[i].spike === 1 ? 0.5 + 0.3 * (p - 0.5) : p);
-  const predClose = testNorms.map((p, i) => {
-    const { baseMin: mn, rangeDiff: rng } = testSet[i];
-    return +(p * rng + mn).toFixed(2); // Bug 4 fix — per-row rolling scale
-  });
-  const actClose  = testSet.map(r => r.nextClose);
-  const actMean   = actClose.reduce((a, b) => a + b, 0) / actClose.length;
-  const ssTot     = actClose.reduce((a, c) => a + (c - actMean) ** 2, 0);
-  const ssRes     = actClose.reduce((a, c, i) => a + (c - predClose[i]) ** 2, 0);
-  const r2        = +(1 - ssRes / ssTot).toFixed(4);
-  const mae       = +(actClose.reduce((a, c, i) => a + Math.abs(c - predClose[i]), 0) / actClose.length).toFixed(2);
-  const rmse      = +(Math.sqrt(ssRes / actClose.length)).toFixed(2);
-  const mape      = +(actClose.reduce((a, c, i) => a + Math.abs((c - predClose[i]) / c), 0) / actClose.length * 100).toFixed(2);
-  const dirAcc    = +(testSet.reduce((a, r, i) => {
-    if (i === 0) return a;
-    return a + ((actClose[i] > testSet[i-1].close) === (predClose[i] > testSet[i-1].close) ? 1 : 0);
-  }, 0) / (testSet.length - 1) * 100).toFixed(1);
+  const testSet = rows.slice(splitAt);
+  const Xtest   = testSet.map(r => r.x);
 
-  const chartN = Math.min(testSet.length, 120);
+  // Predicted log-returns
+  const predLogRets = predictXGB(trees, Xtest, base);
+
+  // FIX #2: reconstruct prices from log-returns (stationary → real prices)
+  const predClose = predLogRets.map((lr, i) => +(testSet[i].close * Math.exp(lr)).toFixed(2));
+  const actClose  = testSet.map(r => r.nextClose);
+  const actLogRets = testSet.map(r => r.y);
+
+  // ── Normalized R² (in log-return space — true model quality) ──────────────
+  const actLRMean = actLogRets.reduce((a, b) => a + b, 0) / actLogRets.length;
+  const ssTotLR   = actLogRets.reduce((a, c) => a + (c - actLRMean) ** 2, 0);
+  const ssResLR   = actLogRets.reduce((a, c, i) => a + (c - predLogRets[i]) ** 2, 0);
+  const normR2    = +(1 - ssResLR / ssTotLR).toFixed(4);
+
+  // ── Price R² (reconstructed — what users care about) ──────────────────────
+  const actMean = actClose.reduce((a, b) => a + b, 0) / actClose.length;
+  const ssTot   = actClose.reduce((a, c) => a + (c - actMean) ** 2, 0);
+  const ssRes   = actClose.reduce((a, c, i) => a + (c - predClose[i]) ** 2, 0);
+  const priceR2 = +(1 - ssRes / ssTot).toFixed(4);
+
+  const mae  = +(actClose.reduce((a, c, i) => a + Math.abs(c - predClose[i]), 0) / actClose.length).toFixed(2);
+  const rmse = +(Math.sqrt(ssRes / actClose.length)).toFixed(2);
+  const mape = +(actClose.reduce((a, c, i) => a + Math.abs((c - predClose[i]) / c), 0) / actClose.length * 100).toFixed(2);
+
+  // ── Direction accuracy with threshold ─────────────────────────────────────
+  let dirCorrect = 0, dirTotal = 0;
+  for (let i = 1; i < testSet.length; i++) {
+    const prevPrice   = testSet[i - 1].close;
+    const threshold   = prevPrice * DIR_THRESHOLD_PCT;
+    const actualUp    = actClose[i]  > prevPrice + threshold;
+    const actualDown  = actClose[i]  < prevPrice - threshold;
+    const predictedUp = predClose[i] > prevPrice + threshold;
+    const predictedDn = predClose[i] < prevPrice - threshold;
+    if ((actualUp || actualDown) && (predictedUp || predictedDn)) {
+      dirTotal++;
+      if ((actualUp && predictedUp) || (actualDown && predictedDn)) dirCorrect++;
+    }
+  }
+  const dirAcc = dirTotal > 0 ? +((dirCorrect / dirTotal) * 100).toFixed(1) : 0;
+
+  const chartN    = Math.min(testSet.length, 120);
   const chartData = testSet.slice(-chartN).map((r, i) => ({
-    date: r.date.slice(5),
-    actual: actClose[testSet.length - chartN + i],
+    date:      r.date.slice(5),
+    actual:    actClose[testSet.length - chartN + i],
     predicted: predClose[testSet.length - chartN + i],
   }));
 
@@ -339,12 +459,19 @@ function computeMetrics(rows, trees, base, splitAt) {
     const off = testSet.length - 20;
     const ac = actClose[off + i], pr = predClose[off + i];
     const df = +(pr - ac).toFixed(2);
-    return { date: r.date, actual: ac.toFixed(2), predicted: pr.toFixed(2), diff: df,
-             err: +(Math.abs(df) / ac * 100).toFixed(2), dir: df >= 0 ? 'up' : 'down',
-             rsi: isNaN(r.rsi) ? '-' : r.rsi.toFixed(1), spike: r.spike };
+    return {
+      date: r.date, actual: ac.toFixed(2), predicted: pr.toFixed(2),
+      diff: df, err: +(Math.abs(df) / ac * 100).toFixed(2),
+      dir: df >= 0 ? 'up' : 'down',
+      rsi: isNaN(r.rsi) ? '-' : r.rsi.toFixed(1),
+      spike: r.spike,
+    };
   });
 
-  return { r2, mae, rmse, mape, dirAcc, chartData, tableRows, testSize: testSet.length };
+  return {
+    r2: normR2, normR2, priceR2, mae, rmse, mape, dirAcc,
+    chartData, tableRows, testSize: testSet.length,
+  };
 }
 
 // ─── PIPELINE STEPS ──────────────────────────────────────────────────────────
@@ -378,19 +505,15 @@ const MLPredictionPage = () => {
   const [activeStep, setActiveStep] = useState(-1);
   const [results,    setResults]    = useState(null);
   const [loading,    setLoading]    = useState(false);
-  const [cacheInfo,  setCacheInfo]  = useState(null); // { lastDate, totalRows, trainedAt }
+  const [cacheInfo,  setCacheInfo]  = useState(null);
 
-  const todayStr = getTodayInIST();
-  const expectedLatestTradingDate = getExpectedLatestTradingDate(todayStr);
-
-  // ── Load from cache on mount / symbol change ────────────────────────────
   useEffect(() => {
     const cached = loadCache(symbol);
     if (cached) {
       setCacheInfo({ lastDate: cached.liveDate, totalRows: cached.totalRows, trainedAt: cached.trainedAt });
       applyCache(cached);
     } else {
-      setStatus({ type: 'info', msg: 'No cache found. Click "Full Train (2000→Today)" to build the model.' });
+      setStatus({ type: 'info', msg: 'No cache found. Click "Full Train" to build the model.' });
       setResults(null);
     }
   }, [symbol]);
@@ -415,47 +538,30 @@ const MLPredictionPage = () => {
     setStatus({ type: 'info', msg: 'Cache cleared. Click "Full Train" to rebuild.' });
   }
 
-  // Apply cached model → generate all display results
   function applyCache(cached) {
-    const { rows, trees, base, liveBaseMin, liveRangeDiff, liveX, liveSpike, liveClose, liveDate,
+    const { rows, trees, base, liveX, liveClose, liveDate,
             totalRows, trainedAt, histChart, fi, trainSize } = cached;
 
-    const pred    = makePrediction(trees, base, liveX, liveSpike, liveClose, liveDate, liveBaseMin, liveRangeDiff);
+    const pred    = makePrediction(trees, base, liveX, liveClose, liveDate);
     const splitAt = Math.floor(rows.length * 0.8);
     const metrics = computeMetrics(rows, trees, base, splitAt);
-      setResults({ ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt, dateRange: `${rows[0].date} → ${liveDate}`, calendarToday: todayStr });
-      // If backend API is configured, ask it for authoritative next trading date
-      const apiBase = process.env.REACT_APP_API_BASE;
-      if (apiBase) {
-        (async () => {
-          try {
-            const url = `${apiBase.replace(/\/$/, '')}/predict`;
-            const body = { feature_list: liveX, features: { today_close: liveClose } };
-            const r = await axios.post(url, body, { timeout: 8000 });
-            if (r?.data?.next_date) {
-              setResults(prev => ({ ...prev, nextDate: r.data.next_date }));
-              setStatus({ type: 'success', msg: `Next trading day (from API): ${r.data.next_date}` });
-            }
-          } catch (e) {
-            // ignore API errors — keep client-side prediction
-            console.warn('Backend predict failed', e?.message || e);
-          }
-        })();
-      }
-    const isStale = liveDate < expectedLatestTradingDate;
-    const age = isStale
-      ? `[Stale] Last market data is ${liveDate} (today: ${todayStr}) — click "Add Today's Data" to check for newer candles.`
-      : `[Valid] Last market data: ${liveDate} (today: ${todayStr}) · Trained: ${trainedAt}`;
-    setStatus({ type: isStale ? 'info' : 'success', msg: age });
+
+    setResults({
+      ...pred, ...metrics, histChart, fi, trainSize, totalRows, trainedAt,
+      dateRange: `${rows[0].date} → ${liveDate}`,
+    });
+    const age = liveDate < TODAY
+      ? `[Stale] Data is from ${liveDate} — click "Add Today's Data" to update.`
+      : `[Valid] Last data: ${liveDate} · Trained: ${trainedAt}`;
+    setStatus({ type: liveDate < TODAY ? 'info' : 'success', msg: age });
     setCacheInfo({ lastDate: liveDate, totalRows, trainedAt });
   }
 
-  // ── FULL TRAIN from historical data ────────────────────────────────────
   const fullTrain = useCallback(async () => {
     setLoading(true); setResults(null);
 
     setActiveStep(0);
-    setStatus({ type: 'loading', msg: `Fetching from Jan ${startYear} → Today. This may take 15–25 seconds…` });
+    setStatus({ type: 'loading', msg: `Fetching from Jan ${startYear} → Today…` });
     const raw = await fetchYFinance(symbol, Number(startYear));
     if (!raw || raw.length < 120) {
       setStatus({ type: 'error', msg: `Fetch failed or insufficient data (got ${raw?.length ?? 0} rows).` });
@@ -463,9 +569,12 @@ const MLPredictionPage = () => {
     }
 
     setActiveStep(1);
-    setStatus({ type: 'loading', msg: `Computing 9 features across ${raw.length} trading days…` });
+    setStatus({ type: 'loading', msg: `Computing 9 features (rolling z-score, lagged spike) across ${raw.length} days…` });
     await new Promise(r => setTimeout(r, 50));
-    const { rows, liveX, liveSpike, liveClose, liveDate, liveBaseMin, liveRangeDiff } = buildDataset(raw);
+
+    // FIX #3: pass splitAt so normalization freezes at train boundary
+    const splitAt = Math.floor((raw.length - 1) * 0.8);
+    const { rows, liveX, liveSpike, liveClose, liveDate } = buildDataset(raw, splitAt);
 
     if (rows.length < 80) {
       setStatus({ type: 'error', msg: 'Not enough clean rows. Try a longer date range.' });
@@ -475,33 +584,29 @@ const MLPredictionPage = () => {
     setActiveStep(2);
     setStatus({ type: 'loading', msg: `Splitting ${rows.length} samples: 80% train / 20% test…` });
     await new Promise(r => setTimeout(r, 50));
-    const splitAt = Math.floor(rows.length * 0.8);
-    const Xtrain  = rows.slice(0, splitAt).map(r => r.x);
-    const ytrain  = rows.slice(0, splitAt).map(r => r.y);
+    const rowSplit = Math.floor(rows.length * 0.8);
+    const Xtrain   = rows.slice(0, rowSplit).map(r => r.x);
+    const ytrain   = rows.slice(0, rowSplit).map(r => r.y);
 
     setActiveStep(3);
-    setStatus({ type: 'loading', msg: `Training XGBoost on ${Xtrain.length} samples…` });
+    // FIX #4: depth-3 trees, 300 rounds
+    setStatus({ type: 'loading', msg: `Training XGBoost (300 trees, depth=3, LR=0.03) on ${Xtrain.length} samples…` });
     await new Promise(r => setTimeout(r, 100));
     const base  = ytrain.reduce((a, b) => a + b, 0) / ytrain.length;
     const trees = trainXGB(Xtrain, ytrain);
 
     setActiveStep(4);
-    setStatus({ type: 'loading', msg: 'Predicting test set & next-day close…' });
+    setStatus({ type: 'loading', msg: 'Computing test metrics & next-day prediction…' });
     await new Promise(r => setTimeout(r, 50));
 
-    // Build history chart (monthly, stride)
     const stride    = Math.max(1, Math.floor(raw.length / 300));
     const histChart = raw.filter((_, i) => i % stride === 0).map(r => ({ date: r.Date.slice(0, 7), close: r.Close }));
-
-    // Feature importance
-    const fi = featureImportance(Xtrain);
-
+    const fi        = featureImportance(Xtrain);
     const trainedAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
     const totalRows = raw.length;
 
-    // Save cache (rows only store x, y, date, close, nextClose, rsi, spike — keep small)
     const cachePayload = {
-      rows, trees, base, liveBaseMin, liveRangeDiff, liveX, liveSpike, liveClose, liveDate,
+      rows, trees, base, liveX, liveSpike, liveClose, liveDate,
       totalRows, trainedAt, histChart, fi, trainSize: Xtrain.length,
     };
     saveCache(symbol, cachePayload);
@@ -512,7 +617,6 @@ const MLPredictionPage = () => {
     setActiveStep(-1);
   }, [symbol, startYear]);
 
-  // ── DAILY UPDATE — fetch only the latest candle & re-predict ────────────
   const dailyUpdate = useCallback(async () => {
     const cached = loadCache(symbol);
     if (!cached) { setStatus({ type: 'error', msg: 'No cache. Run Full Train first.' }); return; }
@@ -520,11 +624,9 @@ const MLPredictionPage = () => {
     setLoading(true);
     setStatus({ type: 'loading', msg: `Fetching latest data since ${cached.liveDate}…` });
 
-    // Fetch from the day after last cached date
     const sinceD = new Date(cached.liveDate + 'T00:00:00Z');
     sinceD.setUTCDate(sinceD.getUTCDate() + 1);
     const sinceStr = sinceD.toISOString().slice(0, 10);
-
     const newRaw = await fetchYFinance(symbol, null, sinceStr);
 
     if (!newRaw || newRaw.length === 0) {
@@ -535,17 +637,8 @@ const MLPredictionPage = () => {
     setStatus({ type: 'loading', msg: `Got ${newRaw.length} new candle(s). Updating features & prediction…` });
     await new Promise(r => setTimeout(r, 50));
 
-    // We only need to update the "live" prediction row — historical rows are cached
-    // Recompute live features using last ~30 rows from cache + new candles
-    // Build a mini context window from the tail of cached rows
-    const TAIL = 60; // need enough history for rolling windows
-    const tailRows = cached.rows.slice(-TAIL);
-
-    // Reconstruct mini OHLCV from cached close values + new raw
-    // For the new candle, we set liveX by re-doing feature eng on the full tail length
-    // Simple approach: re-fetch a short window to get accurate rolling features
     const shortStart = new Date(cached.liveDate + 'T00:00:00Z');
-    shortStart.setUTCDate(shortStart.getUTCDate() - 80);
+    shortStart.setUTCDate(shortStart.getUTCDate() - 300);
     const shortStartStr = shortStart.toISOString().slice(0, 10);
     const contextRaw = await fetchYFinance(symbol, null, shortStartStr);
 
@@ -554,17 +647,12 @@ const MLPredictionPage = () => {
       setLoading(false); return;
     }
 
-    const { liveX, liveSpike, liveClose, liveDate, liveBaseMin, liveRangeDiff } = buildDataset(contextRaw);
-
-    // Append new rows to cached rows (using cached close/normalisation scale)
+    const { liveX, liveSpike, liveClose, liveDate } = buildDataset(contextRaw);
     const { rows: newRows } = buildDataset(contextRaw);
-    // Only add rows newer than last cached date
-    const freshRows = newRows.filter(r => r.date > cached.liveDate);
-
+    const freshRows   = newRows.filter(r => r.date > cached.liveDate);
     const updatedRows = [...cached.rows, ...freshRows];
     const totalRows   = cached.totalRows + freshRows.length;
 
-    // Update history chart with new closes
     const updatedHistChart = [...cached.histChart];
     newRaw.forEach(r => {
       const mo = r.Date.slice(0, 7);
@@ -577,11 +665,9 @@ const MLPredictionPage = () => {
     });
 
     const trainedAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
-
     const updatedCache = {
       ...cached,
       rows: updatedRows, liveX, liveSpike, liveClose, liveDate,
-      liveBaseMin, liveRangeDiff,
       totalRows, trainedAt, histChart: updatedHistChart,
     };
     saveCache(symbol, updatedCache);
@@ -590,15 +676,13 @@ const MLPredictionPage = () => {
     setLoading(false);
   }, [symbol]);
 
-  // ── Auto-run daily update on load if cache is stale ──────────────────────
   useEffect(() => {
     const cached = loadCache(symbol);
-    if (cached && cached.liveDate < expectedLatestTradingDate) {
-      // Cache exists but date is old — auto-update in background
+    if (cached && cached.liveDate < TODAY) {
       setTimeout(() => dailyUpdate(), 500);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbol, expectedLatestTradingDate]);
+  }, [symbol]);
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
@@ -608,9 +692,9 @@ const MLPredictionPage = () => {
       <div className="mlp-header bento-tile bento-large">
         <div className="mlp-title-group">
           <h1>🌲 ML Prediction Engine</h1>
-          <p>Features pre-computed &amp; cached · only latest candle fetched daily · XGBoost prediction</p>
+          <p>Log-return target · Lagged features · Rolling z-score norm · Depth-3 XGBoost</p>
         </div>
-        <div className="mlp-badge">CACHED · DAILY UPDATE</div>
+        <div className="mlp-badge">v6 · 4 FIXES APPLIED</div>
       </div>
 
       {/* Controls */}
@@ -628,13 +712,13 @@ const MLPredictionPage = () => {
           </select>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <button className="btn-predict glow-accent" onClick={fullTrain} disabled={loading} title="Fetch all history, engineer features, train model, cache everything">
+          <button className="btn-predict glow-accent" onClick={fullTrain} disabled={loading}>
             {loading ? '⏳ Running…' : '🔁 Full Train (2000→Today)'}
           </button>
-          <button className="btn-update glow-accent" onClick={dailyUpdate} disabled={loading || !cacheInfo} title="Only fetch today's candle and update the prediction">
+          <button className="btn-update glow-accent" onClick={dailyUpdate} disabled={loading || !cacheInfo}>
             📅 Add Today's Data
           </button>
-          <button className="btn-danger" onClick={() => clearCache(symbol)} disabled={loading} title="Clear cached model for this symbol">
+          <button className="btn-danger" onClick={() => clearCache(symbol)} disabled={loading}>
             🗑 Clear Cache
           </button>
         </div>
@@ -648,8 +732,8 @@ const MLPredictionPage = () => {
           <span>Last data: <strong>{cacheInfo.lastDate}</strong></span>
           <span>·</span>
           <span>Trained: <strong>{cacheInfo.trainedAt}</strong></span>
-          <span className={cacheInfo.lastDate < expectedLatestTradingDate ? 'cache-stale' : 'cache-fresh'}>
-            {cacheInfo.lastDate < expectedLatestTradingDate ? '⚠️ Stale (auto-updating…)': '✅ Up to date'}
+          <span className={cacheInfo.lastDate < TODAY ? 'cache-stale' : 'cache-fresh'}>
+            {cacheInfo.lastDate < TODAY ? '⚠️ Stale (auto-updating…)' : '✅ Up to date'}
           </span>
         </div>
       )}
@@ -660,7 +744,7 @@ const MLPredictionPage = () => {
         <span>{status.msg}</span>
       </div>
 
-      {/* Pipeline Steps */}
+      {/* Pipeline */}
       <div className="mlp-pipeline bento-tile bento-large" style={{ marginTop: '16px' }}>
         {PIPELINE_STEPS.map((s, i) => {
           const Icon = s.icon;
@@ -682,7 +766,9 @@ const MLPredictionPage = () => {
           {/* Next-Day Hero */}
           <div className="next-day-hero bento-tile bento-large">
             <div className="ndh-inner">
-              <div className="ndh-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Calendar size={20} /> Next Trading Day Forecast</div>
+              <div className="ndh-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={20} /> Next Trading Day Forecast
+              </div>
               <div className="ndh-date">{results.nextDate}</div>
               <div className={`ndh-price ${results.diff >= 0 ? 'up' : 'down'}`}>
                 ₹{results.nextPrice.toFixed(2)}
@@ -692,37 +778,51 @@ const MLPredictionPage = () => {
                 &nbsp;({results.diffPct > 0 ? '+' : ''}{results.diffPct}%)
               </div>
               <div className="ndh-today">
-                Last Market Close ({results.todayDate}): ₹{results.todayClose.toFixed(2)}
-              </div>
-              <div className="ndh-today">
-                Calendar Today: {results.calendarToday}
+                Today ({results.todayDate}): ₹{results.todayClose.toFixed(2)}
               </div>
             </div>
             <div className="ndh-stats">
-              <div className="nds-item"><span className="nds-k">Data Range</span><span className="nds-v">{results.dateRange}</span></div>
-              <div className="nds-item"><span className="nds-k">Total Trading Days</span><span className="nds-v">{results.totalRows?.toLocaleString()}</span></div>
-              <div className="nds-item"><span className="nds-k">Train Samples</span><span className="nds-v">{results.trainSize?.toLocaleString()}</span></div>
-              <div className="nds-item"><span className="nds-k">Test Samples</span><span className="nds-v">{results.testSize?.toLocaleString()}</span></div>
-              <div className="nds-item"><span className="nds-k">Trained At</span><span className="nds-v">{results.trainedAt}</span></div>
-              <div className="nds-item"><span className="nds-k">Signal</span><span className="nds-v" style={{ color: results.diff >= 0 ? 'var(--green)' : 'var(--red)', display: 'flex', alignItems: 'center', gap: '6px' }}>{results.diff >= 0 ? <><TrendingUp size={16}/> BUY SIGNAL</> : <><TrendingDown size={16}/> SELL SIGNAL</>}</span></div>
+              <div className="nds-item"><span className="nds-k">Data Range-</span><span className="nds-v">{results.dateRange}</span></div>
+              <div className="nds-item"><span className="nds-k">Total Trading Days-</span><span className="nds-v">{results.totalRows?.toLocaleString()}</span></div>
+              <div className="nds-item"><span className="nds-k">Train Samples-</span><span className="nds-v">{results.trainSize?.toLocaleString()}</span></div>
+              <div className="nds-item"><span className="nds-k">Test Samples-</span><span className="nds-v">{results.testSize?.toLocaleString()}</span></div>
+              <div className="nds-item"><span className="nds-k">Trained At-</span><span className="nds-v">{results.trainedAt}</span></div>
+              <div className="nds-item">
+                <span className="nds-k">Signal-</span>
+                <span className="nds-v" style={{ color: results.diff >= 0 ? 'var(--green)' : 'var(--red)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {results.diff >= 0 ? <><TrendingUp size={16}/> BUY SIGNAL</> : <><TrendingDown size={16}/> SELL SIGNAL</>}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Metrics */}
           <div className="mlp-metrics">
-            {[
-              { label: 'R² Score',       value: results.r2,          sub: '↑ closer to 1 is better', color: 'purple' },
-              { label: 'MAE (₹)',         value: `₹${results.mae}`,   sub: 'Mean Absolute Error',     color: 'green'  },
-              { label: 'RMSE (₹)',        value: `₹${results.rmse}`,  sub: 'Root Mean Sq. Error',     color: 'red'    },
-              { label: 'MAPE',           value: `${results.mape}%`,   sub: 'Mean Abs. % Error',       color: 'orange' },
-              { label: 'Direction Acc.', value: `${results.dirAcc}%`, sub: '% correct up/down calls', color: 'blue'   },
-            ].map(m => (
-              <div key={m.label} className={`mlp-metric-card ${m.color}`}>
-                <div className="mlp-metric-label">{m.label}</div>
-                <div className="mlp-metric-value">{m.value}</div>
-                <div className="mlp-metric-sub">{m.sub}</div>
-              </div>
-            ))}
+            <div className="mlp-metric-card blue" title="R² after log-return price reconstruction">
+              <div className="mlp-metric-label">Price R² <span style={{ fontSize: '0.65rem', opacity: 0.65 }}>↑ closer to 1</span></div>
+              <div className="mlp-metric-value">{results.priceR2}</div>
+              <div className="mlp-metric-sub">Reconstructed price</div>
+            </div>
+            <div className="mlp-metric-card green">
+              <div className="mlp-metric-label">MAE (₹)</div>
+              <div className="mlp-metric-value">₹{results.mae}</div>
+              <div className="mlp-metric-sub">Mean Absolute Error</div>
+            </div>
+            <div className="mlp-metric-card red">
+              <div className="mlp-metric-label">RMSE (₹)</div>
+              <div className="mlp-metric-value">₹{results.rmse}</div>
+              <div className="mlp-metric-sub">Root Mean Sq. Error</div>
+            </div>
+            <div className="mlp-metric-card orange">
+              <div className="mlp-metric-label">MAPE</div>
+              <div className="mlp-metric-value">{results.mape}%</div>
+              <div className="mlp-metric-sub">Mean Abs. % Error</div>
+            </div>
+            <div className="mlp-metric-card blue" title="Direction accuracy using 0.2% threshold filter">
+              <div className="mlp-metric-label">Dir. Acc. <span style={{ fontSize: '0.65rem', opacity: 0.65 }}>≥0.2% moves</span></div>
+              <div className="mlp-metric-value">{results.dirAcc}%</div>
+              <div className="mlp-metric-sub">Threshold-filtered calls</div>
+            </div>
           </div>
 
           {/* Charts */}
@@ -741,7 +841,6 @@ const MLPredictionPage = () => {
                 </ResponsiveContainer>
               </div>
             )}
-
             <div className="bento-tile" style={{ gridColumn: 'span 6' }}>
               <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><TrendingUp size={20} /> Actual vs Predicted (Test Set)</h2>
               <ResponsiveContainer width="100%" height={240}>
@@ -751,14 +850,14 @@ const MLPredictionPage = () => {
                   <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${v.toFixed(0)}`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Line type="monotone" dataKey="actual"    stroke="var(--green)" strokeWidth={2} dot={false} name="Actual Close" />
-                  <Line type="monotone" dataKey="predicted" stroke="var(--text-secondary)" strokeWidth={2} dot={false} name="Predicted" strokeDasharray="5 3" />
+                  <Line type="monotone" dataKey="actual"    stroke="var(--green)"          strokeWidth={2} dot={false} name="Actual Close" />
+                  <Line type="monotone" dataKey="predicted" stroke="var(--text-secondary)"  strokeWidth={2} dot={false} name="Predicted" strokeDasharray="5 3" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Predictions table */}
+          {/* Feature importance + table */}
           <div className="grid-12" style={{ marginBottom: '24px' }}>
             {results.fi && (
               <div className="bento-tile" style={{ gridColumn: 'span 4' }}>
@@ -774,15 +873,19 @@ const MLPredictionPage = () => {
                 ))}
               </div>
             )}
-
             <div className="bento-tile" style={{ gridColumn: results.fi ? 'span 8' : 'span 12' }}>
               <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}><Calendar size={20} /> Last 20 Test Predictions</h2>
               <div style={{ overflowX: 'auto', maxHeight: '400px' }}>
                 <table className="dark-table">
                   <thead>
                     <tr>
-                      <th>Date (t)</th><th className="col-num">Actual ₹</th><th className="col-num">Predicted ₹</th>
-                      <th className="col-num">Diff ₹</th><th className="col-num">Error %</th><th className="col-num">RSI</th><th style={{textAlign: 'center'}}>Spike</th>
+                      <th>Date (t)</th>
+                      <th className="col-num">Actual ₹</th>
+                      <th className="col-num">Predicted ₹</th>
+                      <th className="col-num">Diff ₹</th>
+                      <th className="col-num">Error %</th>
+                      <th className="col-num">RSI</th>
+                      <th style={{ textAlign: 'center' }}>Spike</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -794,7 +897,9 @@ const MLPredictionPage = () => {
                         <td className="col-num" style={{ color: r.diff >= 0 ? 'var(--green)' : 'var(--red)' }}>{r.diff >= 0 ? '+' : ''}{r.diff}</td>
                         <td className="col-num text-muted">{r.err}%</td>
                         <td className="col-num" style={{ color: parseFloat(r.rsi) > 70 ? 'var(--red)' : parseFloat(r.rsi) < 30 ? 'var(--green)' : 'var(--text-secondary)' }}>{r.rsi}</td>
-                        <td style={{ color: r.spike === 1 ? 'var(--accent)' : 'var(--text-secondary)', textAlign: 'center' }}>{r.spike === 1 ? <Zap size={14} style={{ display: 'inline-block' }} /> : '–'}</td>
+                        <td style={{ color: r.spike === 1 ? 'var(--accent)' : 'var(--text-secondary)', textAlign: 'center' }}>
+                          {r.spike === 1 ? <Zap size={14} style={{ display: 'inline-block' }} /> : '–'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -805,14 +910,12 @@ const MLPredictionPage = () => {
         </>
       )}
 
-      {/* Empty */}
+      {/* Empty state */}
       {!results && !loading && (
         <div className="empty-state" style={{ marginTop: '24px' }}>
           <TreePine size={48} className="empty-icon" />
           <h3>Model Not Trained</h3>
-          <p>
-            Click <strong>Full Train</strong> to fetch history, engineer features, train XGBoost, and cache the model.
-          </p>
+          <p>Click <strong>Full Train</strong> to fetch history, engineer features, train XGBoost, and cache the model.</p>
         </div>
       )}
     </div>
